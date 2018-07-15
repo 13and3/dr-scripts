@@ -1,0 +1,593 @@
+# quiet
+=begin
+  Documentation: https://elanthipedia.play.net/Lich_script_development#common-arcana
+=end
+
+custom_require.call(%w[drinfomon equipmanager events common common-arcana common-crafting common-healing common-items common-money common-travel common-summoning])
+
+
+module MY_COMMON
+  module_function
+
+  def train_forging(timers, discipline)
+    unless DRSkill.getxp('Forging') > 10
+      wait_for_script_to_complete('workorders', [discipline])
+      wait_for_script_to_complete('sell-loot')
+      train_appraisal(timers)
+    end
+  end
+
+  def train_outfitting(timers)
+    unless DRSkill.getxp('Outfitting') > 10
+      wait_for_script_to_complete('workorders', ['tailoring'])
+      wait_for_script_to_complete('sell-loot')
+      train_appraisal(timers)
+    end
+  end
+
+
+  def train_attunement(magic_state)
+    return if DRSkill.getxp('Attunement') > 32
+    maybe_prepare(magic_state)
+    # if @use_research && @settings.research_skills.include?('Attunement')
+    #   do_research('Attunement')
+    #   return
+    # end
+
+    wait_for_script_to_complete('attunement')
+    cast_next_spell_without_filler(magic_state)
+  end
+
+  def train_engineering(timers, disc = 'shaping')
+    unless DRSkill.getxp('Engineering') > 10
+      wait_for_script_to_complete('workorders', [disc])
+      wait_for_script_to_complete('sell-loot')
+      train_appraisal(timers)
+    end
+  end
+
+
+
+  def train_scholarship
+    #play_song?
+    wait_for_script_to_complete('study-art', ['scholarship'])
+  end
+
+  def get_open_page(str)
+    result = str.scan(/The compendium lies open to the section on (.*) physiology/).flatten
+    if(result.length > 0)
+      return result.first
+    else
+      str.scan(/You turn to the section containing (.*) physiology./).flatten.first
+    end
+  end
+
+  def filler_first_aid(filler_setting)
+    return false if filler_setting[:flag].nil? ? checkcastrt < 1 : Flags[filler_setting[:flag]]
+    booktype = 'compendium'
+    bput('get my compendium', 'You get', 'You are already holding')
+    open_page = get_open_page bput('look my compendium', '^The compendium lies open to the section on (.*) physiology')
+    UserVars.chart_state = {} if UserVars.chart_state.nil?
+
+    until(filler_setting[:flag].nil? ? checkcastrt < 1 : Flags[filler_setting[:flag]])
+      result = bput("study my #{booktype}", 'you begin to study', 'you begin studying', 'With a sudden moment of', 'In a sudden moment of clarity', '^Why ', 'you continue to study', 'you attempt', 'you continue studying')
+      if(result.include?('Why'))
+        UserVars.chart_state[open_page] = Time.now
+        open_page = get_open_page bput("turn my #{booktype}", 'You turn', 'That section does not exist', 'Turn what?')
+      end
+    end
+
+    bput('stow my compendium', 'You put')
+    true
+  end
+
+  def train_first_aid(magic_state, chart_data, as_filler = false)
+    compendium_charts(magic_state,  chart_data, as_filler)
+  end
+
+  def compendium_charts(magic_state, chart_data, as_filler)
+    bput('get my compendium', 'You get', 'You are already holding')
+    bput('look my compendium', '^The compendium lies open to the section on .* physiology')
+    pause
+    compendium_charts = reget(40).grep(/^   .+$/).map(&:strip)
+    charts_to_read = chart_data.select { |name, _info| compendium_charts.include?(name) }
+    study_charts(charts_to_read, magic_state, as_filler)
+    bput('stow my compendium', 'You put')
+  end
+
+  # def filler_compendium(magic_state)
+  #   bput('get my compendium', 'You get', 'You are already holding')
+  #   case bput('study my compendium', 'Why', 'clarity', 'Roundtime')
+  #   when 'Why'
+  #     bput('turn my compendium')
+  #   end
+  #
+  #
+  # end
+  #
+  # def mark_chart_complete(chart_state)
+  #
+  #   bput('look my compendium', '^The compendium lies open to the section on (.*) physiology')
+  # end
+
+  def study_charts(charts_to_read, magic_state, as_filler)
+    booktype = 'compendium'
+    charts_to_read
+        .map { |_name, info| info }
+        .select { |info| info['scholarship'] <= DRSkill.getrank('Scholarship') }
+        .sort_by { |info| info['scholarship'] }
+        .reverse
+        .take(20)
+        .each do |info|
+      turn_result = bput("turn my #{booktype} to #{info['index']}", 'You turn', 'That section does not exist', 'Turn what?')
+      case turn_result
+      when 'You turn'
+        open_page = get_open_page(turn_result)
+        maybe_prepare(magic_state) unless as_filler
+
+        result = bput("study my #{booktype}", 'you begin to study', 'you begin studying', 'With a sudden moment of', 'In a sudden moment of clarity', '^Why ', 'you continue to study', 'you attempt', 'you continue studying')
+        waitrt?
+        if(result.include?('Why') || result.include?('clarity'))
+          UserVars.chart_state[open_page] = Time.now
+        end
+        cast_next_spell_without_filler(magic_state) unless as_filler
+        break if DRSkill.getxp('First Aid') >= 30 || (as_filler && checkcastrt < 1)
+      end
+    end
+  end
+  def magic_locked(skills = ['Augmentation', 'Warding', 'Utility'])
+    return UserVars.magic_skills.all? {|skill| DRSkill.getxp(skill) > 30 }
+  end
+
+  def train_magic(state)
+    until(magic_locked || mana < 21)
+      choose_next_spell(state)
+      prepare_next_spell(state)
+      cast_next_spell(state)
+    end
+  end
+
+  def spell_prepped
+    return prepped? != 'None'
+  end
+
+  def maybe_prepare(state)
+    echo spell_prepped
+    echo magic_locked
+    echo state[:max_concentration] - 20 > DRStats.concentration
+    unless(magic_locked || spell_prepped || state[:max_concentration] - 20 > DRStats.concentration)
+      choose_next_spell(state)
+      prepare_next_spell_without_camb(state)
+    end
+  end
+
+  def constrained_by_moon(spell)
+    return false unless spell["moon"]
+    return true if set_moon_data(deep_copy(spell)).nil?
+    false
+  end
+
+  def choose_next_spell(state)
+    spells = state[:spells]
+    return if spells.nil?
+    search_index = state[:spell_index]
+    search_length = spells.length
+
+
+    finding_spell = true
+    iterations = 0
+    until !finding_spell || iterations > search_length
+      search_index = (search_index + 1) % search_length
+      next_spell = spells[search_index]
+      unless DRSkill.getxp(next_spell['skill']) > 30
+        unless(constrained_by_moon(next_spell))
+          state[:current_spell] = next_spell
+        else
+          state[:current_spell] = next_spell['alt']
+        end
+        finding_spell = false
+      end
+      iterations = iterations + 1
+    end
+    state[:current_spell]
+    state[:spell_index] = search_index
+    !finding_spell
+  end
+
+  def prepare_next_spell_without_camb(state)
+    prepare_next_spell(state, true)
+  end
+
+  def deep_copy(data)
+    return Marshal.load(Marshal.dump(data))
+  end
+
+  def prepare_next_spell(state, ignore_camb = false)
+    settings = state[:settings]
+    current_spell = state[:current_spell]
+    return if(mana < 20 || current_spell.nil?)
+    data = deep_copy(current_spell)
+    discern_data = DRCA.check_discern(deep_copy(current_spell), settings)
+
+
+    if( (DRSkill.getxp("Arcana") >= 32 || ignore_camb) && !discern_data['cambrinth'].nil?)
+      data['mana'] = discern_data['mana'] + discern_data['cambrinth'].flatten.map(&:to_i).reduce(0, :+)
+    else
+      data = discern_data
+    end
+    data = update_astral_data(data)
+
+    return unless data # update_astral_data returns nil on failure
+
+    if (data['abbrev'] =~ /locat/i) && !DRSpells.active_spells['Clear Vision']
+      cast_spell({ 'abbrev' => 'cv', 'mana' => 1, 'prep_time' => 5 }, settings)
+    end
+
+    echo 'checkprep'
+    echo checkprep
+
+    release_cyclics if data['cyclic']
+    DRC.bput('release spell', 'You let your concentration lapse', "You aren't preparing a spell") unless checkprep == 'None'
+    DRC.bput('release mana', 'You release all', "You aren't harnessing any mana")
+
+    if data['ritual']
+      ritual(data, settings.ignored_npcs)
+      return
+    end
+
+    command = 'prep'
+    command = data['prep'] if data['prep']
+    command = data['prep_type'] if data['prep_type']
+
+    state[:current_prep_info] = data
+    state[:prepare_time] = Time.now
+    return unless prepare?(data['abbrev'], data['mana'], data['symbiosis'], command)
+  end
+
+
+  def train_mechanical_lore(magic_state)
+    return unless DRSkill.getxp('Mechanical Lore') < 28
+    settings = magic_state[:settings]
+    equipment_manager = magic_state[:equipment_manager]
+    equipment_manager.wear_equipment_set?('standard')
+    equipment_manager.empty_hands
+
+    start_xp = DRSkill.getxp('Mechanical Lore')
+    end_xp = [start_xp + 5, 28].min
+
+
+    echo 'current xp'
+    echo start_xp
+    echo end_xp
+    walk_to(magic_state[:settings]['vine_room']) if(DRSkill.getrank('Outdoorsmanship') >= 110)
+
+    pause 1
+    fput "remove #{settings.hand_armor}"
+    fput "stow #{settings.hand_armor}"
+    pause 1
+    while(DRSkill.getxp('Mechanical Lore') < end_xp)
+      braid_to_fail(magic_state, DRSkill.getrank('Outdoorsmanship') < 110 ? 'grass' : 'vine')
+      echo 'waiting for end xp of '
+      echo end_xp
+    end
+    equipment_manager.empty_hands
+    fput "get my #{settings.hand_armor}"
+    fput "wear my #{settings.hand_armor}"
+    return true
+  end
+
+
+  def braid_to_fail(magic_state, item)
+    return if left_hand || right_hand
+    return unless forage?(item)
+    loop do
+      maybe_prepare(magic_state)
+      waitrt?
+      case bput("braid my #{item}", 'You need to have more', 'Roundtime', 'You need both hands to do that', 'You can\'t braid the .* into your braided', 'is already as long as you can make it', 'You are in no condition')
+      when 'Roundtime'
+        rt = reget(10, 'Roundtime').last.scan(/\d+/).first.to_i
+        break if rt >= 8 || DRSkill.getxp('Mechanical Lore') >= 30
+      when 'is already as long as you can make it'
+        waitrt?
+        break
+      when 'You need both hands to do that', /into your braided/
+        waitrt?
+        empty_trash(magic_state[:equipment_manager])
+        return
+      when 'You are in no condition'
+        dispose_trash(item)
+        wait_for_script_to_complete('healme')
+        return
+      else
+        break unless forage?(item)
+      end
+      cast_next_spell_without_filler(magic_state) if checkcastrt < 2
+    end
+    pause 1
+    waitrt?
+    bput("pull my #{item}", 'You tug and pull')
+    pause 1
+    waitrt?
+    empty_trash(magic_state[:equipment_manager])
+  end
+
+
+  def empty_trash(equipment_manager)
+    trash_nouns = get_data('items').trash_nouns
+
+    if trash_nouns.any? { |noun| /\b#{noun}/i =~ GameObj.right_hand.noun } && !equipment_manager.is_listed_item?(right_hand)
+      dispose_trash(right_hand)
+    end
+
+    if trash_nouns.any? { |noun| /\b#{noun}/i =~ GameObj.left_hand.noun } && !equipment_manager.is_listed_item?(left_hand)
+      dispose_trash(left_hand)
+    end
+  end
+
+  def cast_next_spell_without_filler_in_room(state)
+    return unless spell_prepped && checkcastrt < 2
+    walk_to(state[:casting_room])
+    cast_next_spell(state, true)
+  end
+
+  def cast_next_spell_without_filler(state)
+    return unless spell_prepped && checkcastrt < 2
+    cast_next_spell(state, true)
+  end
+
+  def cast_next_spell(state, skip_filler = false)
+    current_spell = state[:current_spell]
+
+    return unless spell_prepped
+    current_prep_info = state[:current_prep_info]
+    settings = state[:settings]
+
+
+    unless(skip_filler)
+      if DRSkill.getxp("Arcana") < 32
+        unless settings.cambrinth_items[0]['name']
+          settings.cambrinth_items = [{
+                                          'name' => settings.cambrinth,
+                                          'cap' => settings.cambrinth_cap,
+                                          'stored' => settings.stored_cambrinth
+                                      }]
+        end
+        settings.cambrinth_items.each_with_index do |item, index|
+          if current_prep_info['cambrinth'][index][0]
+            find_charge_invoke_stow(item['name'], item['stored'], item['cap'],
+                                    settings.dedicated_camb_use, current_prep_info['cambrinth'][index],
+                                    settings.cambrinth_invoke_exact_amount)
+          end
+        end
+      else
+        echo 'do i do filler?'
+        'prepare to do filler'
+        do_filler(state) until(checkcastrt < 1 || skip_filler)
+        echo 'done with filler :) '
+      end
+    end
+
+
+    state[:prepare_time] = nil
+    data = current_prep_info
+    do_filler(state) until(checkcastrt < 1 || skip_filler)
+    waitcastrt_and_pause?
+    pause 1
+
+    cast?(data['cast'], data['symbiosis'], data['before'], data['after'])
+  end
+
+
+  def do_filler(state)
+    echo 'doin filler2'
+    pause 1
+    if can_train_appraisal(state[:timers]) && DRSkill.getxp('Appraisal') < 28
+      train_appraisal(state[:timers])
+      return true
+    end
+    if (state[:sorcery] && DRSkill.getxp('Sorcery') < 32)
+      train_sorcery(state, true)
+      return true
+    end
+    # if DRSkill.getxp("First Aid") < 28
+    #   train_first_aid(state, state[:chart_data], true)
+    #   return
+    # end
+    if DRSkill.getxp("Outdoorsmanship") < 28
+      wait_for_script_to_complete('outdoorsmanship', [1])
+      return true
+    end
+    if can_train_perception(state[:timers])
+      train_perception_kg(state[:timers])
+      return true
+    end
+    if can_train_attunement(state[:timers])
+      state[:timers][:power_timer] = Time.now
+      if(DRStats.moon_mage?)
+        bput('perc mana', 'Roundtime')
+      else
+        bput('power', 'Roundtime')
+      end
+
+      waitrt?
+      return true
+    end
+    if(DRSkill.getxp('Mechanical Lore') < 30)
+      echo 'doin mech filler'
+      braid_to_fail(state, 'grass')
+      return
+    end
+    state[:skip_first_aid] || filler_first_aid({})
+    echo 'no filler left, pausing'
+    waitcastrt_and_pause?
+=begin
+    if can_train_empathy
+
+      bput('perc health', 'Roundtime')
+      waitrt?
+      return
+    end
+=end
+    return false
+    echo 'nothing to fill with, sad story'
+  end
+
+
+  def train_sorcery(magic_state, oneTime = false)
+
+    magic_state[:equipment_manager].empty_hands
+    bput('get my rune', 'You get')
+    count = 10
+    loop do
+      count = count + 1
+      maybe_prepare(magic_state)
+      bput('focus my rune', 'Roundtime')
+      waitrt?
+      cast_next_spell_without_filler(magic_state)
+      break if oneTime || (DRSkill.getxp('Sorcery') > 28) || count > 20 || Flags['astrology-ready']
+    end
+    magic_state[:equipment_manager].empty_hands
+  end
+
+  def can_train_appraisal(timers)
+    return timers[:appraisal_timer].nil? || (Time.now - timers[:appraisal_timer]) > 120 && DRSkill.getxp("Appraisal") < 29
+  end
+
+  def train_appraisal(timers)
+    return unless can_train_appraisal(timers)
+    bput('open my pouch', 'You open', 'already open', 'tied off')
+    wait_for_script_to_complete('appraisal') if can_train_appraisal(timers)
+    bput('close my pouch', 'You close', 'That is')
+    timers[:appraisal_timer] = Time.now
+  end
+
+  def train_perception_kg(timers)
+    timers[:perception_timer] = Time.now
+    bput('hunt', 'Roundtime')
+    waitrt?
+  end
+
+  def sanowret
+    if(DRSkill.getxp('Arcana') < 20)
+      bput('gaze my sanowret crystal', 'You gaze intently', 'I could not find', 'do that here', 'good place for that')
+    end
+  end
+
+  def can_train_perception(timers)
+    return timers[:perception_timer].nil? || (Time.now - timers[:perception_timer]) > 80 && DRSkill.getxp("Perception") < 32
+  end
+
+  def can_train_attunement(timers)
+    return timers[:power_timer].nil? || (Time.now - timers[:power_timer]) > 240 && DRSkill.getxp("Attunement") < 32
+  end
+
+
+  def go_in_vault
+    arches = ['first arch', 'second arch', 'third arch']
+    inside = false
+    archidx = 0
+    until (inside)
+
+      result = bput("go #{arches[archidx]}",  'attendant escorts you', 'your arm', 'The attendant steps')
+      if(result.include?('escorts'))
+        inside = true
+      else
+        archidx = archidx + 1 % arches.length
+        if(archidx == 0)
+          pause 30
+          echo 'waiting for someone to leave.. this can be done better'
+        end
+      end
+    end
+    bput('pull lev', 'grinding')
+    move 'go door'
+    bput('open vault', 'The vault opens')
+  end
+
+  def leave_vault
+    bput('close vault', 'You close')
+    move 'go door'
+    move 'go arch'
+  end
+
+  def store_crafting(settings)
+    return if(bput("tap my #{settings.crafting_container}", 'I could not', 'You tap').include? 'I could not')
+    walk_to(8285)
+    go_in_vault
+    bput("remove #{settings.crafting_container}", 'You sling')
+    bput("put #{settings.crafting_container} in vault", 'You put')
+    vault_metals
+
+    leave_vault
+  end
+
+  def vault_metals
+    ['nugget', 'bar'].each{ |metal|
+      until(bput("get my #{metal}", 'You get', 'What were').include?('What'))
+        bput("put #{metal} on large shelf in vault", "You put")
+      end
+    }
+  end
+
+  def get_crafting(settings)
+    return if(bput("tap my #{settings.crafting_container}", 'I could not', 'You tap').include?('You tap'))
+    walk_to(8285)
+    go_in_vault
+    bput("get #{settings.crafting_container} from vault", 'You get')
+    bput("wear #{settings.crafting_container}", 'You sling')
+    leave_vault
+  end
+
+
+  def train_outdoorsmanship(magic_state)
+    echo 'prepare to train outdoormanship'
+    start_xp = DRSkill.getxp('Outdoorsmanship')
+    end_xp = start_xp + 12
+    echo 'end_xp'
+    echo end_xp
+    until(DRSkill.getxp('Outdoorsmanship') > end_xp || DRSkill.getxp('Outdoorsmanship')  > 27)
+      echo 'outdoormanship cycle'
+      maybe_prepare(magic_state)
+
+      wait_for_script_to_complete('outdoorsmanship')
+      cast_next_spell_without_filler(magic_state)
+    end
+  end
+
+
+  def check_listening(lesson_state, settings)
+    return unless settings.listen
+    return if listen?(lesson_state[:last_teacher], settings.listen_observe)
+    return if DRRoom.pcs.empty?
+    return unless lesson_state[:listen_timer].nil? || Time.now - lesson_state[:listen_timer] > 5 * 60
+    return unless lesson_state[:class_timer].nil?
+
+    classes = assess_teach
+    lesson_state[:last_teacher] = classes
+                        .reject { |t, s| t.nil? || s.nil? }
+                        .sort_by { |_t, s| [DRSkill.getxp(s), DRSkill.getrank(s)] }
+                        .find { |t, _s| listen?(t, settings.listen_observe) }
+                        .first
+
+    lesson_state[:listen_timer] = lesson_state[:last_teacher] ? nil : Time.now
+  end
+
+  def check_teaching(lesson_state, settings)
+    return unless settings.classes_to_teach
+    return if settings.classes_to_teach.empty?
+    return if lesson_state[:last_teacher]
+    if lesson_state[:class_timer].nil? || Time.now - lesson_state[:class_timer] > 10 * 60
+      settings.classes_to_teach.rotate!
+      bput('stop teach', 'You stop', 'you aren\'t teaching')
+      pause
+      lesson_state[:class_timer] = Time.now
+    end
+
+    fput('teach open')
+    to_teach = settings.classes_to_teach.first
+    settings.pupils.each { |character| bput("teach #{to_teach} to #{character}", 'You begin to', 'is already listening to you', 'is listening to someone else', 'I could not find who you were referring to', 'You have already offered', 'That person is too busy teaching', 'You are already teaching', 'You cannot teach two different classes at the same time', 'is not paying attention to you', 'You cannot listen to a teacher and teach', 'already trying to teach you something') }
+    pause 6
+    fput('teach open')
+  end
+
+end

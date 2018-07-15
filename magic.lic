@@ -1,0 +1,700 @@
+=begin
+  Documentation: https://elanthipedia.play.net/Lich_script_repository#astrology
+=end
+
+custom_require.call(%w[common common-arcana common-travel drinfomon equipmanager spellmonitor events common-kg])
+
+class Magic
+  include DRC
+  include DRCA
+  include DRCI
+  include DRCT
+  include MY_COMMON
+
+  def initialize
+    exit unless DRStats.moon_mage?
+
+    start_script('moonwatch')
+
+    settings = get_settings
+    @settings = settings
+
+    arg_definitions = [
+      [{ name: 'bare', regex:/bare/i, optional: true, description: 'pass to not forage'}]
+    ]
+    @args = parse_args(arg_definitions)
+    echo @args
+    # arg_definitions = [
+    #   [{ name: 'magic', regex:/magic/i, description: 'just trains magic until locked'}],
+    #   [{ name: 'rtr', regex: /rtr/i, description: 'Runs Read the Ripples' }]
+    # ]
+    # args = parse_args(arg_definitions)
+
+    # Make sure that our Cirlce is up-to-date - avoid using stale data for new characters who joined the guild
+    bput('info', 'Circle:') if DRStats.circle.zero?
+
+    @equipment_manager = EquipmentManager.new
+    @constellations = get_data('constellations').constellations
+    chart_data = get_data('anatomy-charts').first_aid_charts
+    @booktype = 'compendium'
+    @have_divination_bones = settings.have_divination_bones
+    @divination_bones_container = settings.divination_bones_storage['container']
+    @divination_bones_tied = settings.divination_bones_storage['tied']
+    @have_telescope = settings.have_telescope
+    @ap_source = settings.astral_plane_training['train_source']
+    @ap_destination = settings.astral_plane_training['train_destination']
+    @spells = settings.waggle_sets['astrology-magic']
+    echo @spells
+    @spell_index = -1
+    @prediction_pool_target = settings.astrology_use_full_pools ? 10 : settings.astrology_pool_target
+
+    @athletics_options = get_data('athletics').athletics_options
+    @rtr_data = nil
+    Flags.add('natural-exit', 'ALPHACLOSEOUT')
+    Flags.add('astrology-ready-to-observe', 'You feel you have sufficiently pondered your latest observation.')
+    Flags.add('astrology-ready-to-pop', 'insightful understanding of the celestial influences',
+              'powerful understanding of the celestial influences',
+              'complete understanding of the celestial influences')
+
+    lesson_state = {}
+
+    timers = {
+        perception_timer: nil,
+        appraisal_timer: nil,
+        power_timer: nil
+    }
+
+
+    @magic_state = {
+        spells: settings.waggle_sets['astrology-magic'],
+        settings: settings,
+        prepare_time: 0,
+        spell_index: -1,
+        timers: timers,
+        equipment_manager: @equipment_manager,
+        chart_data: chart_data,
+        chart_state: {},
+        max_concentration: DRStats.concentration
+    }
+    magic_state = @magic_state
+
+    UserVars.magic_skills = ['Warding', 'Augmentation', 'Utility']
+    echo " Flags['rtr-expire'].nil? #{Flags['rtr-expire'].nil?}" if UserVars.astrology_debug
+    echo " Flags['rtr-expire'] = #{Flags['rtr-expire']}" if UserVars.astrology_debug
+    alt_cycle = [
+      'Athletics',
+      'Mechanical Lore',
+      'First Aid',
+      'Athletics',
+      'Outdoorsmanship',
+      'Melee Mastery',
+      'Athletics',
+      'Engineering',
+      'Athletics',
+      'Forging'
+      #'First Aid',
+      #'Melee Mastery',
+      #'Athletics'
+    ]
+    alt_idx = 5 # UserVars.cycle_index || 0
+
+    Flags['astrology-ready-to-observe'] = true
+    @training_room = (@settings.training_rooms || [@settings.safe_room]).sample
+    while true
+      walk_to(@training_room)
+
+      check_listening(lesson_state, settings)
+      #check_teaching(lesson_state, settings)
+
+      echo 'astrology ready?'
+      echo Flags['astrology-ready-to-observe']
+
+
+      # if should_pop
+      #   predict_all(check_pools)
+      # end
+      #
+      #
+      pause 1
+      fput "remove #{settings.hand_armor}"
+      fput "stow #{settings.hand_armor}"
+      pause 1
+      wait_for_script_to_complete('buff')
+
+      if should_observe
+        echo 'BEGINNING ASTROLOGY'
+        do_filler(magic_state) until mana > 30
+        fput('release all')
+        if(DRSpells.active_spells['Piercing Gaze'].nil?)
+          pg = @settings['waggle_sets']['standard']['Piercing Gaze']
+          if(DRCA.prepare?('pg', pg['mana']))
+            do_filler(magic_state) until checkcastrt < 1
+            waitcastrt_and_pause?
+            pause 3
+            DRCA.cast?
+          end
+        end
+        train_astrology(magic_state, settings)
+        bput('stow telescope', 'You put', 'Stow what')
+
+        train_appraisal(timers)
+        Flags.reset('astrology-ready-to-observe')
+        echo 'ENDING ASTROLOGY'
+      end
+
+      until((magic_locked && DRSkill.getxp('Arcana') > 30)||
+          mana < 20 ||
+          should_observe)
+        echo 'cycle magic...'
+        choose_next_spell(magic_state)
+        prepare_next_spell(magic_state)
+        unless cast_next_spell(magic_state)
+          pause 5
+          echo 'failed to cast...'
+        end
+      end
+      train_appraisal(timers)
+
+
+      unless DRSkill.getxp(alt_cycle[alt_idx]) > 28 || (Flags['astrology-ready-to-observe'] && !astrology_locked)
+        case alt_cycle[alt_idx]
+        when 'Mechanical Lore'
+          sanowret
+          train_mechanical_lore(magic_state)
+        when 'Forging'
+          if(DRSkill.getxp('Forging') < 16)
+            get_crafting(settings)
+            train_forging(timers, 'blacksmithing')
+            train_appraisal(timers)
+          end
+        when 'Engineering'
+          if(DRSkill.getxp('Engineering') < 16)
+            get_crafting(settings)
+            train_engineering(timers)
+            train_appraisal(timers)
+          end
+        when 'Athletics'
+          train_athletics(magic_state, settings)
+          train_appraisal(timers)
+        when 'Outdoorsmanship'
+          sanowret
+          train_outdoorsmanship(magic_state)
+          train_appraisal(timers)
+        when 'Scholarship'
+          train_scholarship
+        when 'Melee Mastery'
+          echo 'melee mastery'
+          echo DRSkill.getxp('Melee Mastery')
+          if(DRSkill.getxp('Melee Mastery') < 16)
+            sanowret
+            store_crafting(settings)
+            #walk_to(settings.lockpick_room_id)
+            #wait_for_script_to_complete('pick')
+            wait_for_script_to_complete('hunting-buddy')
+            walk_to(settings.lockpick_room_id)
+            #wait_for_script_to_complete('pick')
+            get_crafting(settings)
+            wait_for_script_to_complete('crossing-repair')
+            walk_to(@training_room)
+          end
+        when 'First Aid'
+          sanowret
+          train_first_aid(magic_state, chart_data)
+        when 'Sorcery'
+          train_sorcery(magic_state)
+        else
+          pause 30
+          echo 'nothing to train?'
+        end
+      end
+
+      train_appraisal(timers)
+      train_attunement(magic_state)
+      alt_idx = (alt_idx+1) % alt_cycle.length
+      UserVars.cycle_index = alt_idx
+
+
+    end
+  end
+
+  def astrology_locked
+    return DRSkill.getxp('Astrology') >= 24
+  end
+
+  def should_observe
+    Flags['astrology-ready-to-observe'].include?('You feel you have sufficiently pondered your latest observation.') &&
+        !Flags['astrology-ready-to-pop'].include?('understanding of the')
+
+  end
+
+  def should_pop
+    !astrology_locked && Flags['astrology-ready-to-pop'].include?('understanding of the')
+  end
+
+  def train_athletics(magic_state, settings)
+    start_exp = DRSkill.getxp('Athletics')
+    end_exp = [start_exp + 15, 29].min
+    crossing_athletics(magic_state, settings, end_exp)
+  end
+
+
+  def crossing_athletics(magic_state, settings, end_exp)
+    play_song?
+    until DRSkill.getxp('Athletics') >= end_exp
+      @athletics_options
+          .reject { |data| settings.avoid_athletics_in_justice && data['justice'] }
+          .each do |data|
+        break unless climb?(magic_state, data['room'], data['targets'], end_exp)
+      end
+    end
+  end
+
+  def climb?(magic_state, room, targets, end_exp)
+    maybe_prepare(magic_state)
+    targets.each do |target|
+      walk_to(room)
+      return true if DRRoom.npcs.length >= 3
+
+      bput("climb #{target}", '.*')
+      pause
+      waitrt?
+      return false if DRSkill.getxp('Athletics') >= end_exp
+    end
+    cast_next_spell_without_filler(magic_state)
+    true
+  end
+
+  def train_perception
+    return unless DRSkill.getxp('Perception') < 30 
+    if(@hunt_time == nil || (Time.now - @hunt_time) > 80 )
+      bput('hunt', 'Roundtime')
+      waitrt?
+    end
+  end
+
+  def get_next_alt
+
+  end
+
+
+
+
+  def play_song?(blocking = false)
+    return true if @researching
+    return false if @no_instrument
+    return true if DRSkill.getxp('Performance') >= 28
+
+    UserVars.song = @song_list.first.first unless UserVars.song
+    @did_play = true
+    case bput("play #{UserVars.song}", 'dirtiness may affect your performance', 'slightest hint of difficulty', 'You begin a', 'You struggle to begin', 'You\'re already playing a song', 'You effortlessly begin', 'You begin some', 'You cannot play', 'Play on what instrument', 'now isn\'t the best time to be playing', 'Perhaps you should find somewhere drier before trying to play')
+    when 'Play on what instrument'
+      @no_instrument = true
+      return false
+    when 'now isn\'t the best time to be playing', 'Perhaps you should find somewhere drier before trying to play'
+      return true
+    when 'You cannot play'
+      wait_for_script_to_complete('safe-room')
+    when 'dirtiness may affect your performance'
+      if DRSkill.getrank('Performance') < 20
+        echo "Skipping cleaning of zills due to low rank of Performance: #{DRSkill.getrank('Performance')}" if UserVars.crossing_trainer_debug
+        return true
+      end
+      stop_play
+      clean_zills
+      return play_song?
+    when 'You begin a', 'You effortlessly begin', 'You begin some'
+      stop_play
+      UserVars.song = @song_list[UserVars.song] || @song_list.first.first
+      return play_song?
+    when 'You struggle to begin'
+      if UserVars.song != @song_list.first.first
+        stop_play
+        UserVars.song = @song_list.first.first
+        echo 'first song #{UserVars.song}'
+        return play_song?
+      end
+    end
+  end
+
+
+  def stop_play
+    return unless @did_play
+    return if @no_instrument
+    @did_play = false
+    bput('stop play', 'You stop playing your song', 'In the name of', "But you're not performing")
+    Flags['ct-song'] = true
+  end
+
+
+  def clean_zills
+    cloth = @settings.cleaning_cloth
+
+    case bput("get my #{cloth}", 'You get', 'What were you')
+    when 'What were you'
+      echo('You have no chamois cloth, removing Performance from training')
+      @settings.crossing_training.delete('Performance')
+      return
+    end
+
+    bput('remove my zills', 'You slide')
+
+    loop do
+      case bput("wipe my zills with my #{cloth}",
+                'Roundtime',
+                'not in need of drying',
+                'you manage to clean',
+                'not in need of cleaning',
+                'You should be sitting up')
+      when 'not in need of drying'
+        break
+      when 'You should be sitting up'
+        fix_standing
+        next
+      when 'you manage to clean'
+        waitrt?
+        next
+      when 'not in need of cleaning'
+        return
+      end
+      pause 1
+      waitrt?
+
+      until /you wring a dry/i =~ bput("wring my #{cloth}", 'You wring a dry', 'You wring out')
+        pause 1
+        waitrt?
+      end
+    end
+  end
+
+  def do_buffs(settings)
+    return unless settings
+    return unless settings.waggle_sets['astrology']
+
+    @equipment_manager.empty_hands
+    # Pop out rtr data from buffs and save it for later
+    buffs = settings.waggle_sets['astrology']
+    @rtr_data = buffs.select { |spell| spell.eql?('Read the Ripples') }
+                     .values
+                     .first
+    buffs.reject! { |spell| spell.eql?('Read the Ripples') }
+
+    buffs.each_value do |value|
+      next unless value['use_auto_mana']
+      check_discern(value, settings)
+    end
+
+    cast_spells(buffs, settings)
+  end
+
+  def visible_bodies()
+    result = []
+    all_bodies = @constellations
+    case bput('observe sky in heavens', 'The following heavenly bodies are visible:', "That's a bit hard to do while inside")
+    when "That's a bit hard to do while inside"
+      echo('Must be outdoors to observe sky')
+      exit
+    end
+
+    until (line = get?) =~ /^Roundtime/i
+      result << all_bodies.find { |body| /\b#{body['name']}\b/i =~ line && line !~ /below the horizon/ }
+    end
+    result.compact.select { |data| data['circle'] <= DRStats.circle }
+  end
+
+  def check_attunement(magic_state)
+    return if DRSkill.getxp('Attunement') > 30
+    ['', 'mana', 'moons', 'planets'].each do |target|
+      maybe_prepare(magic_state)
+      bput("perceive #{target}", 'roundtime')
+      waitrt?
+      cast_next_spell_without_filler(magic_state)
+    end
+  end
+
+  def check_pools
+    pools = {
+      'lore' => 0,
+      'magic' => 0,
+      'survival' => 0,
+      'offensive combat' => 0,
+      'defensive combat' => 0,
+      'future events' => 0
+    }
+    pools_to_size = {
+      /You have no understanding of the celestial influences over/ => 0,
+      /You have a feeble understanding of the celestial influences over/ => 1,
+      /You have a weak understanding of the celestial influences over/ => 2,
+      /You have a fledgling understanding of the celestial influences over/ => 3,
+      /You have a modest understanding of the celestial influences over/ => 4,
+      /You have a decent understanding of the celestial influences over/ => 5,
+      /You have a significant understanding of the celestial influences over/ => 6,
+      /You have a potent understanding of the celestial influences over/ => 7,
+      /You have an insightful understanding of the celestial influences over/ => 8,
+      /You have a powerful understanding of the celestial influences over/ => 9,
+      /You have a complete understanding of the celestial influences over/ => 10
+    }
+    bput('predict state all', 'roundtime')
+    lines = reget(50).reverse
+    lines.select! { |line| line =~ /celestial influences/ }
+    pools.select! { |name, _level| pools[name] = lines.find { |line| line =~ /#{name}/ } }
+    pools.each { |name, text| pools_to_size.each { |match_text, value| pools[name] = value if match_text =~ text } }
+    echo " pools: #{pools}" if UserVars.astrology_debug
+    waitrt?
+    pools
+  end
+
+  def check_events(pools)
+    waitrt?
+    prev_size = pools['future events']
+    result = nil
+    until ['You are unable to sense additional information'].include? result
+      result = bput('study sky', 'You feel a lingering sense', 'You feel it is too soon', 'Roundtime', 'You are unable to sense additional information', 'detect any portents')
+      waitrt?
+      return if ['detect any portents'].include? result
+      pools = check_pools
+      break if pools['future events'] == prev_size
+      break if pools['future events'] == 10
+      prev_size = pools['future events']
+    end
+    bput('predict event', 'You focus inwardly')
+  end
+
+  def check_weather(magic_state)
+    echo 'Checking the weather' if UserVars.astrology_debug
+    maybe_prepare(magic_state)
+    bput('predict weather', 'roundtime', 'You gaze')
+    waitrt?
+    cast_next_spell_without_filler(magic_state)
+  end
+
+  def rtr_active?
+    # DRSpells.active_spells sometimes shows RtR as inactive even though it is active
+    100.times do
+      pause 0.01
+      return true if DRSpells.active_spells.include?('Read the Ripples')
+    end
+    false
+  end
+
+  def check_ripples(settings)
+    return unless @rtr_data
+    return unless settings
+    return if !Flags['rtr-expire'].nil? && !Flags['rtr-expire']
+
+    @equipment_manager.empty_hands
+    cast_spell(@rtr_data, settings)
+    perc_time = Time.now - 61
+    Flags.add('rtr-expire', get_data('spells').spell_data['Read the Ripples']['expire']) if rtr_active?
+    while rtr_active?
+      line = get?
+      if perc_time + 60 < Time.now
+        perc_mana
+        perc_time = Time.now
+      end
+      res = @constellations.find { |body| /As your consciousness drifts amongst the currents of Fate, .* #{body['name']}/i =~ line }
+      observe(res['name'], settings) unless res.nil?
+    end
+    nil
+  end
+
+  def check_astral
+    return unless DRStats.circle > 99
+    return unless @ap_source
+    return unless @ap_destination
+    return if !UserVars.astral_plane_exp_timer.nil? && Time.now - UserVars.astral_plane_exp_timer < 3600
+
+    wait_for_script_to_complete('bescort', ['ways', @ap_destination])
+    UserVars.astral_plane_exp_timer = Time.now
+    wait_for_script_to_complete('bescort', ['ways', @ap_source])
+    exit
+  end
+
+  def predict_all(pools, magic_state = nil)
+    skillset_to_pool = {
+      'offensive combat' => 'offense',
+      'defensive combat' => 'defense',
+      'magic' => 'magic',
+      'survival' => 'survival',
+      'lore' => 'lore',
+      'future events' => 'future events'
+    }
+
+    maybe_prepare(magic_state) unless magic_state.nil?
+    pools.reject { |_skill, size| (size < @prediction_pool_target) }
+         .each_key do |skill|
+      break if DRSkill.getxp('Astrology') > 24
+      align(skillset_to_pool[skill])
+      Flags.reset('astrology-ready-to-pop')
+    end
+    cast_next_spell_without_filler(magic_state) unless magic_state.nil?
+  end
+
+  def check_heavens(magic_state)
+    @equipment_manager.empty_hands
+    maybe_prepare(magic_state)
+    vis_bodies = visible_bodies()
+    cast_next_spell_without_filler(magic_state)
+
+    night = vis_bodies.find { |body| body['constellation'] }
+    echo 'night'
+    echo night
+    maybe_prepare(magic_state)
+    best_eye_data = vis_bodies
+                    .select { |data| @have_telescope || !data['telescope'] }
+                    .max_by { |data| [data['pools'].values.compact.size, data['circle']] }
+
+    echo 'best_eye_data'
+    echo best_eye_data
+    echo(" best_eye_data = #{best_eye_data}") if UserVars.astrology_debug
+
+    waitrt?
+    cast_next_spell_without_filler(magic_state)
+    maybe_prepare(magic_state)
+    if @have_telescope
+      things_to_try = @constellations.select do |data|
+        data['telescope'] &&
+          data['circle'] <= DRStats.circle &&
+          data['circle'] > best_eye_data['circle'] &&
+          (night || !data['constellation']) &&
+          data['pools'].values.compact.size > best_eye_data['pools'].values.compact.size
+      end
+
+      echo 'things to try'
+      echo things_to_try
+
+      things_to_try << best_eye_data
+
+      things_to_try.sort! { |data| data['circle'] }.reverse!
+
+      echo(" things_to_try = #{things_to_try}") if UserVars.astrology_debug
+
+      things_to_try.find do |data|
+        result = nil
+        until ['Roundtime', 'You peer aimlessly through your telescope'].include?(result)
+          return check_heavens(magic_state) if Flags['bad-search'] == 'is foiled by the daylight'
+          next if Flags['bad-search'] == 'turns up fruitless'
+
+          result = observe(data['name'])
+        end
+        result == 'Roundtime'
+      end
+    else
+      until observe(best_eye_data['name'],)
+        if Flags['bad-search']
+          check_heavens(magic_state)
+          return
+        end
+      end
+    end
+
+    pause 2
+    waitrt?
+    cast_next_spell_without_filler(magic_state)
+  end
+
+  def get_healed
+    @equipment_manager.empty_hands
+    snapshot = Room.current.id
+    wait_for_script_to_complete('safe-room', ['force'])
+    walk_to(snapshot)
+    settings = get_settings
+    do_buffs(settings)
+  end
+
+  def observe(body, ignore_telescope = false)
+    Flags.add('bad-search', 'is foiled by the (daylight|darkness)', 'turns up fruitless')
+    if @have_telescope && !ignore_telescope
+      bput('get telescope', 'you get', 'You are already', "That can't be picked up")
+      case bput("center telescope on #{body}", 'peering right down', 'You put your eye', 'open it to make any use of it', 'The pain is too much')
+      when /peering right down/
+        echo 'SUNTORIIII!!'
+        bput("observe #{body} in sky", ['Roundtime'])
+        return 'Roundtime'
+      when /open it/
+        bput('open my telescope', 'extend your telescope')
+        return observe(body, settings)
+      when /The pain is too much/
+        get_healed
+        return observe(body, settings)
+      end
+
+      result = bput('peer telescope', 'You peer aimlessly through your telescope', 'open it to make any use of it', 'You see nothing regarding the future', 'The pain is too much', 'Roundtime')
+      case result
+      when /The pain is too much/
+        get_healed
+        return observe(body, settings)
+      when /open it/
+        bput('open my telescope', 'extend your telescope')
+        return observe(body, settings)
+      end
+      @equipment_manager.empty_hands
+      result
+    else
+      ['Roundtime', 'Clouds obscure'].include? bput("observe #{body} in sky", 'Your search for', 'You see nothing regarding the future', 'Clouds obscure', 'Roundtime')
+    end
+  end
+
+  def roll_bones
+    if @divination_bones_tied
+      bput("untie bones from my #{@divination_bones_container}", 'divination bones')
+    else
+      bput("get bones from my #{@divination_bones_container}", 'divination bones', 'you get')
+    end
+    bput('roll my bones', 'roundtime')
+    waitrt?
+    if @divination_bones_tied
+      bput("tie bones to my #{@divination_bones_container}", 'divination bones')
+    else
+      bput("put bones in my #{@divination_bones_container}", 'divination bones', 'you put')
+    end
+  end
+
+  def align(skill)
+    if skill == 'future events'
+      bput('predict event', 'You focus inwardly')
+      return
+    end
+    bput("align #{skill}", 'You focus internally')
+    waitrt?
+    if @have_divination_bones
+      roll_bones
+    else
+      bput('predict future', 'roundtime')
+    end
+    waitrt?
+    pause
+    pause 0.5 while stunned?
+    fix_standing
+  end
+  def train_astrology(magic_state, settings)
+    return unless settings
+    return unless settings.astrology_training.is_a?(Array)
+    return if settings.astrology_training.none?
+    settings.astrology_training.each do |task|
+      break if DRSkill.getxp('Astrology') > 30
+      case task
+      when 'ways'
+        check_astral
+      when 'observe'
+        check_heavens(magic_state)
+      when 'rtr'
+        check_ripples(settings)
+      when 'weather'
+        check_weather(magic_state)
+      when 'events'
+        check_events(check_pools)
+      when 'moons' # deprecated - left for backwards compat. only
+        echo '- Moons is deprecated and will be removed soon. Please use - attunement instead'
+        check_attunement(magic_state)
+      when 'attunement'
+        check_attunement(magic_state)
+      end
+    end
+    predict_all(check_pools, magic_state)
+    bput('predict analyze', 'Roundtime')
+    waitrt?
+  end
+end
+
+# Call this last to avoid the need for forward declarations
+Magic.new

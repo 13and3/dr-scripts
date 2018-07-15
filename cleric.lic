@@ -1,0 +1,301 @@
+=begin
+  Documentation: https://elanthipedia.play.net/Lich_script_repository#astrology
+=end
+
+custom_require.call(%w[common common-arcana common-travel drinfomon equipmanager spellmonitor events common-kg])
+
+class Magic
+  include DRC
+  include DRCA
+  include DRCI
+  include DRCT
+  include MY_COMMON
+
+  def initialize
+    exit unless DRStats.cleric?
+
+
+    settings = get_settings
+    @settings = settings
+
+    arg_definitions = [
+      [{ name: 'bare', regex:/bare/i, optional: true, description: 'pass to not forage'}]
+    ]
+    @args = parse_args(arg_definitions)
+    echo @args
+    # arg_definitions = [
+    #   [{ name: 'magic', regex:/magic/i, description: 'just trains magic until locked'}],
+    #   [{ name: 'rtr', regex: /rtr/i, description: 'Runs Read the Ripples' }]
+    # ]
+    # args = parse_args(arg_definitions)
+
+    # Make sure that our Cirlce is up-to-date - avoid using stale data for new characters who joined the guild
+    bput('info', 'Circle:') if DRStats.circle.zero?
+
+    @equipment_manager = EquipmentManager.new
+    @constellations = get_data('constellations').constellations
+    chart_data = get_data('anatomy-charts').first_aid_charts
+    @booktype = 'compendium'
+    @have_telescope = settings.have_telescope
+    @ap_source = settings.astral_plane_training['train_source']
+    @ap_destination = settings.astral_plane_training['train_destination']
+    @spells = settings.waggle_sets['cleric_magic']
+    echo 'spells'
+    echo @spells
+    @spell_index = -1
+
+    @athletics_options = get_data('athletics').athletics_options
+    @rtr_data = nil
+    Flags.add('natural-exit', 'ALPHACLOSEOUT')
+
+    lesson_state = {}
+
+    timers = {
+        perception_timer: nil,
+        appraisal_timer: nil,
+        power_timer: nil
+    }
+
+
+    @magic_state = {
+        spells: settings.waggle_sets['cleric_magic'],
+        settings: settings,
+        prepare_time: 0,
+        spell_index: -1,
+        timers: timers,
+        equipment_manager: @equipment_manager,
+        chart_data: chart_data,
+        chart_state: {},
+        max_concentration: DRStats.concentration,
+        skip_first_aid: true
+    }
+    magic_state = @magic_state
+
+    alt_cycle = [
+      'Melee Mastery',
+      'Mechanical Lore',
+      'Scholarship',
+      'Theurgy',
+      'Athletics',
+      'Engineering',
+      'Forging',
+      'Outdoorsmanship'
+    ]
+    alt_idx = 0
+
+    @training_room = (@settings.training_rooms || [@settings.safe_room]).sample
+    while true
+
+      walk_to(@training_room)
+
+      check_listening(lesson_state, settings)
+      #check_teaching(lesson_state, settings)
+
+      pause 1
+      fput "remove #{settings.hand_armor}"
+      fput "stow #{settings.hand_armor}"
+      pause 1
+      # if should_pop
+      #   predict_all(check_pools)
+      # end
+
+      UserVars.magic_skills = ['Warding', 'Augmentation']
+      until((magic_locked && DRSkill.getxp('Arcana') > 30) ||  mana < 20)
+        echo 'cycle magic...'
+        choose_next_spell(magic_state)
+        prepare_next_spell(magic_state)
+        pause 5 unless cast_next_spell(magic_state)
+      end
+      train_appraisal(timers)
+      unless DRSkill.getxp(alt_cycle[alt_idx]) > 28
+        case alt_cycle[alt_idx]
+        when 'Mechanical Lore'
+          walk_to(@training_room)
+          train_mechanical_lore(magic_state)
+        when 'Forging'
+          if(DRSkill.getxp('Forging') < 16)
+            get_crafting(settings)
+            train_forging(timers, 'blacksmithing')
+            train_appraisal(timers)
+          end
+        when 'Engineering'
+          if(DRSkill.getxp('Engineering') < 16)
+            get_crafting(settings)
+            train_engineering(timers, 'carving')
+            train_appraisal(timers)
+          end
+        when 'Athletics'
+          train_athletics(magic_state, settings)
+          train_appraisal(timers)
+        when 'Outdoorsmanship'
+          walk_to(@training_room)
+          train_outdoorsmanship(magic_state)
+          train_appraisal(timers)
+        when 'Scholarship'
+          train_appraisal(timers)
+          train_scholarship
+          train_appraisal(timers)
+        when 'Theurgy'
+          wait_for_script_to_complete('theurgy')
+        when 'Melee Mastery'
+          store_crafting(settings)
+          wait_for_script_to_complete('hunting-buddy')
+          wait_for_script_to_complete('hunting-buddy', 'back')
+          wait_for_script_to_complete('crossing-repair')
+        when 'First Aid'
+          walk_to(@training_room)
+          train_first_aid(magic_state, chart_data)
+        else
+          pause 30
+          echo 'nothing to train?'
+        end
+      end
+
+      train_appraisal(timers)
+      train_attunement(magic_state)
+      alt_idx = (alt_idx+1) % alt_cycle.length
+      UserVars.cycle_index = alt_idx
+
+
+    end
+  end
+
+  def train_athletics(magic_state, settings)
+    start_exp = DRSkill.getxp('Athletics')
+    end_exp = [start_exp + 15, 29].min
+    crossing_athletics(magic_state, settings, end_exp)
+  end
+
+
+  def crossing_athletics(magic_state, settings, end_exp)
+    play_song?
+    until DRSkill.getxp('Athletics') >= end_exp
+      @athletics_options
+          .reject { |data| settings.avoid_athletics_in_justice && data['justice'] }
+          .each do |data|
+        break unless climb?(magic_state, data['room'], data['targets'], end_exp)
+      end
+    end
+  end
+
+  def climb?(magic_state, room, targets, end_exp)
+    maybe_prepare(magic_state)
+    targets.each do |target|
+      walk_to(room)
+      return true if DRRoom.npcs.length >= 3
+
+      bput("climb #{target}", '.*')
+      pause
+      waitrt?
+      return false if DRSkill.getxp('Athletics') >= end_exp
+    end
+    cast_next_spell_without_filler(magic_state)
+    true
+  end
+
+  def train_perception
+    return unless DRSkill.getxp('Perception') < 30 
+    if(@hunt_time == nil || (Time.now - @hunt_time) > 80 )
+      bput('hunt', 'Roundtime')
+      waitrt?
+    end
+  end
+
+  def get_next_alt
+
+  end
+
+
+
+
+  def play_song?(blocking = false)
+    return true if @researching
+    return false if @no_instrument
+    return true if DRSkill.getxp('Performance') >= 28
+
+    UserVars.song = @song_list.first.first unless UserVars.song
+    @did_play = true
+    case bput("play #{UserVars.song}", 'dirtiness may affect your performance', 'slightest hint of difficulty', 'You begin a', 'You struggle to begin', 'You\'re already playing a song', 'You effortlessly begin', 'You begin some', 'You cannot play', 'Play on what instrument', 'now isn\'t the best time to be playing', 'Perhaps you should find somewhere drier before trying to play')
+    when 'Play on what instrument'
+      @no_instrument = true
+      return false
+    when 'now isn\'t the best time to be playing', 'Perhaps you should find somewhere drier before trying to play'
+      return true
+    when 'You cannot play'
+      wait_for_script_to_complete('safe-room')
+    when 'dirtiness may affect your performance'
+      if DRSkill.getrank('Performance') < 20
+        echo "Skipping cleaning of zills due to low rank of Performance: #{DRSkill.getrank('Performance')}" if UserVars.crossing_trainer_debug
+        return true
+      end
+      stop_play
+      clean_zills
+      return play_song?
+    when 'You begin a', 'You effortlessly begin', 'You begin some'
+      stop_play
+      UserVars.song = @song_list[UserVars.song] || @song_list.first.first
+      return play_song?
+    when 'You struggle to begin'
+      if UserVars.song != @song_list.first.first
+        stop_play
+        UserVars.song = @song_list.first.first
+        echo 'first song #{UserVars.song}'
+        return play_song?
+      end
+    end
+  end
+
+
+  def stop_play
+    return unless @did_play
+    return if @no_instrument
+    @did_play = false
+    bput('stop play', 'You stop playing your song', 'In the name of', "But you're not performing")
+    Flags['ct-song'] = true
+  end
+
+
+  def clean_zills
+    cloth = @settings.cleaning_cloth
+
+    case bput("get my #{cloth}", 'You get', 'What were you')
+    when 'What were you'
+      echo('You have no chamois cloth, removing Performance from training')
+      @settings.crossing_training.delete('Performance')
+      return
+    end
+
+    bput('remove my zills', 'You slide')
+
+    loop do
+      case bput("wipe my zills with my #{cloth}",
+                'Roundtime',
+                'not in need of drying',
+                'you manage to clean',
+                'not in need of cleaning',
+                'You should be sitting up')
+      when 'not in need of drying'
+        break
+      when 'You should be sitting up'
+        fix_standing
+        next
+      when 'you manage to clean'
+        waitrt?
+        next
+      when 'not in need of cleaning'
+        return
+      end
+      pause 1
+      waitrt?
+
+      until /you wring a dry/i =~ bput("wring my #{cloth}", 'You wring a dry', 'You wring out')
+        pause 1
+        waitrt?
+      end
+    end
+  end
+
+end
+
+# Call this last to avoid the need for forward declarations
+Magic.new
