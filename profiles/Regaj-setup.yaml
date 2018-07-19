@@ -1,0 +1,295 @@
+---
+# https://elanthipedia.play.net/Thief#Circle_Requirements
+
+# 1 Magic: Augmentation
+# 4 Weapons (only 2 are needed to circle): Brawling, Small Edged, Small Blunt, Light Thrown
+# 2 Armors (only 1 is needed to circle): Light Armor, Shield Usage
+# 8 Survivals: Stealth, Thievery, Athletics, Perception, Skinning, Evasion, Locksmithing, Backstab
+# 3 Lores: Appraisal, Tactics, Scholarship
+
+# Eventually you will need to train 1 more Magic to circle (for a total of 2)
+# However, you will probably end up training them all since they each have very useful abilities
+# The other Magic skills are: Utility, Debilitation
+
+# Hunting settings
+training_manager_hunting_priority: true
+training_manager_priority_skills:
+- Shield Usage
+- Melee Mastery
+hunting_info:
+- :zone: endrus_serpents
+  stop_on:
+  - Shield Usage
+  - Melee Mastery
+  - Missile Mastery
+
+# Gear settings
+gear:
+# - :adjective: example
+#   :name: gear
+#   :is_leather: true
+#   :hinders_lockpicking: false
+#   :is_worn: true
+- :adjective: padded
+  :name: hauberk
+  :is_leather: true
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: mail
+  :name: balaclava
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: mail
+  :name: gloves
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: target
+  :name: shield
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: parry
+  :name: stick
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: spiked
+  :name: knuckles
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: elbow
+  :name: spikes
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: knee
+  :name: spikes
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :name: stiletto
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+  :wield: true
+- :name: broadsword
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+  :wield: true
+- :name: tago
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+  :wield: true
+- :name: riste
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+  :wield: true
+- :name: shortbow
+  :is_leather: true
+  :hinders_lockpicking: false
+  :is_worn: false
+gear_sets:
+  standard:
+  - padded hauberk
+  - mail balaclava
+  - mail gloves
+  - target shield
+  - parry stick
+  - knee spikes
+  - spiked knuckles
+  - elbow spikes
+  stealing:
+  - parry stick
+  - spiked knuckles
+  - elbow spikes
+  - knee spikes
+
+# Combat settings
+training_abilities:
+  Tactics: 30
+  Stealth: 60
+  Hunt: 80
+  Ambush Stun: 60
+  Khri Prowess: 60
+  Collect: 120
+weapon_training:
+  Brawling: ''
+  Small Edged: stiletto
+  Small Blunt: riste
+  Light Thrown: tago
+  Bow: shortbow
+priority_weapons:
+  - Small Blunt
+  - Brawling
+  - Light Thrown
+  - Small Edged
+  - Bows
+kneel_khri: true
+buff_nonspells:
+  khri:
+  - Focus
+  - Hasten
+  - Darken
+skinning:
+  skin: true
+  arrange_all: false
+  arrange_count: 0
+  tie_bundle: true
+listen: true
+
+password: theusudeavea
+
+lockpick_room_id: 8250
+safe_room: 5713 #empath guild
+vine_room: 851 #pine needle path
+
+# Non-combat settings
+exp_timers:
+  Stealth: 300
+  Locksmithing: 600
+  Thievery: 600
+  Augmentation: 60
+train_with_spells: false
+training_nonspells:
+  Augmentation: Khri Focus
+  Utility: Khri Hasten
+crossing_training:
+- Thievery
+- Augmentation
+- Locksmithing
+- Outdoorsmanship
+- Perception
+- Appraisal
+- Athletics
+- Scholarship
+- Blacksmithing
+- Engineering
+bin_stolen: true
+stealing_bag: haversack
+stealing_buffs:
+  khri:
+    - Plunder
+    - Darken
+favor_goal: 30
+favor_god: Damaris
+
+typeahead: 2
+
+
+slow_bin_speed: true
+
+
+loot_additions:
+  - nugget
+  - bar
+  - dira
+
+training_nonspells:
+  Augmentation: Khri Focus
+  Utility: Khri Hasten
+
+dance_threshold: 1
+dance_skill: Small Blunt
+stances:
+  Small Edged:
+  - Parry
+  - Evasion
+  - Shield Usage
+  Light Thrown:
+  - Evasion
+  - Shield Usage
+  - Parry
+  Brawling:
+  - Shield Usage
+  - Evasion
+  - Parry
+  Small Blunt:
+  - Parry
+  - Evasion
+  - Shield Usage
+  Bow:
+  - Evasion
+  - Shield Usage
+  - Parry Ability
+
+gem_pouch_adjective: fuzzy
+tie_gem_pouches: false
+picking_box_source: pack
+use_lockpick_ring: true
+skip_lockpick_ring_refill: true
+sell_loot_pouch: false
+full_pouch_container: pack
+use_stealth_attacks: true
+backstab: Small Edged
+ambush: true
+appraisal_training:
+  - pouches
+
+
+crafting_container: duffel bag
+
+storage_containers:
+  - pack
+  - duffel bag
+  - haversack
+
+
+carving_workorder_material_type: bone
+workorder_diff:
+  blacksmithing: hard
+  carving: challenging
+  alchemy: challenging
+  tailoring: challenging
+train_workorders:
+  - Tailoring
+  - Carving
+  - Blacksmithing
+work_order_disciplines:
+  - Blacksmithing #Forging
+  - Tailoring #Outfitting
+  - Carving #Engineering
+
+workorder_min_items: 2
+workorder_max_items: 2
+
+forging_tools:
+- ball-peen hammer
+- tong
+- bellow
+- wide shovel
+
+carving_tools:
+- chisels
+- rifflers
+- rasp
+- bone saw
+
+tailoring_tools:
+- needles
+
+
+engineering_room: 8250
+outfitting_room: 8250
+
+hunting_buddies:
+  #- Reejay
+
+
+workorder_recipes:
+  blacksmithing:
+    - a short metal mug
+    - a tall metal mug
+    - a back scratcher
+    - smooth knitting needles
+
+
+empty_hunting_room_messages:
+  - Dis seems lahk a good place ta hunt, anyone 'ere?
+  - Ah'm lookin fo some trouble, anyone 'ere?
+  - Dis 'ere's a nice spot for huntin, anyone about?

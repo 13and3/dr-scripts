@@ -9,25 +9,62 @@ custom_require.call(%w[drinfomon equipmanager events common common-arcana common
 module MY_COMMON
   module_function
 
+  def timing_start(skill)
+    timing_data = {
+        startTime: Time.now,
+        startMindState: DRSkill.getxp(skill)
+    }
+    echo "TIMING:    start work on #{skill} at #{timing_data[:startTime]} with mindstate of #{timing_data[:startMindState]}"
+    timing_data
+  end
+
+  def timing_end(skill, timing_data)
+
+    endTime = Time.now
+    endMindState = DRSkill.getxp(skill)
+    startTime = timing_data[:startTime]
+    startMindState = timing_data[:startMindState]
+    gained = endMindState - startMindState
+    duration = endTime - startTime
+    echo "TIMING:    Skill: #{skill}"
+    echo "TIMING:    Duration: #{duration}s"
+    echo "TIMING:    Mind state gained: #{gained}"
+    echo "TIMING:    seconds per mindstate: #{duration / gained}"
+  end
+
   def train_forging(timers, discipline)
     unless DRSkill.getxp('Forging') > 10
+      timing_data = timing_start('Forging')
       wait_for_script_to_complete('workorders', [discipline])
+      timing_end('Forging', timing_data)
       wait_for_script_to_complete('sell-loot')
       train_appraisal(timers)
     end
   end
 
-  def train_outfitting(timers)
+  def train_outfitting(timers, discipline = 'tailoring')
     unless DRSkill.getxp('Outfitting') > 10
-      wait_for_script_to_complete('workorders', ['tailoring'])
+      timing_data = timing_start('Outfitting')
+      wait_for_script_to_complete('workorders', [discipline])
+      timing_end('Outfitting', timing_data)
       wait_for_script_to_complete('sell-loot')
       train_appraisal(timers)
     end
   end
 
+  def train_engineering(timers, disc = 'shaping')
+    unless DRSkill.getxp('Engineering') > 10
+      timing_data = timing_start('Engineering')
+      wait_for_script_to_complete('workorders', [disc])
+      timing_end('Engineering', timing_data)
+      wait_for_script_to_complete('sell-loot')
+      train_appraisal(timers)
+    end
+  end
 
   def train_attunement(magic_state)
     return if DRSkill.getxp('Attunement') > 32
+    timing_data = timing_start('Attunement')
     maybe_prepare(magic_state)
     # if @use_research && @settings.research_skills.include?('Attunement')
     #   do_research('Attunement')
@@ -36,21 +73,17 @@ module MY_COMMON
 
     wait_for_script_to_complete('attunement')
     cast_next_spell_without_filler(magic_state)
+    timing_end('Attunement', timing_data)
   end
 
-  def train_engineering(timers, disc = 'shaping')
-    unless DRSkill.getxp('Engineering') > 10
-      wait_for_script_to_complete('workorders', [disc])
-      wait_for_script_to_complete('sell-loot')
-      train_appraisal(timers)
-    end
-  end
 
 
 
   def train_scholarship
     #play_song?
+    timing_data = timing_start('Scholarship')
     wait_for_script_to_complete('study-art', ['scholarship'])
+    timing_end('Scholarship', timing_data)
   end
 
   def get_open_page(str)
@@ -82,7 +115,9 @@ module MY_COMMON
   end
 
   def train_first_aid(magic_state, chart_data, as_filler = false)
+    timing_data = timing_start('First Aid')
     compendium_charts(magic_state,  chart_data, as_filler)
+    timing_end('First Aid', timing_data)
   end
 
   def compendium_charts(magic_state, chart_data, as_filler)
@@ -154,8 +189,8 @@ module MY_COMMON
   def maybe_prepare(state)
     echo spell_prepped
     echo magic_locked
-    echo state[:max_concentration] - 20 > DRStats.concentration
-    unless(magic_locked || spell_prepped || state[:max_concentration] - 20 > DRStats.concentration)
+    echo DRStats.concentration
+    unless(magic_locked || spell_prepped || 90 > DRStats.concentration)
       choose_next_spell(state)
       prepare_next_spell_without_camb(state)
     end
@@ -211,7 +246,8 @@ module MY_COMMON
 
 
     if( (DRSkill.getxp("Arcana") >= 32 || ignore_camb) && !discern_data['cambrinth'].nil?)
-      data['mana'] = discern_data['mana'] + discern_data['cambrinth'].flatten.map(&:to_i).reduce(0, :+)
+      mana =  discern_data['mana'] + discern_data['cambrinth'].flatten.map(&:to_i).reduce(0, :+)
+      data['mana'] = mana - (0.1 * mana).ceil
     else
       data = discern_data
     end
@@ -247,6 +283,7 @@ module MY_COMMON
 
   def train_mechanical_lore(magic_state)
     return unless DRSkill.getxp('Mechanical Lore') < 28
+    timing_data = timing_start('Mechanical Lore')
     settings = magic_state[:settings]
     equipment_manager = magic_state[:equipment_manager]
     equipment_manager.wear_equipment_set?('standard')
@@ -256,9 +293,6 @@ module MY_COMMON
     end_xp = [start_xp + 5, 28].min
 
 
-    echo 'current xp'
-    echo start_xp
-    echo end_xp
     walk_to(magic_state[:settings]['vine_room']) if(DRSkill.getrank('Outdoorsmanship') >= 110)
 
     pause 1
@@ -267,18 +301,21 @@ module MY_COMMON
     pause 1
     while(DRSkill.getxp('Mechanical Lore') < end_xp)
       braid_to_fail(magic_state, DRSkill.getrank('Outdoorsmanship') < 110 ? 'grass' : 'vine')
-      echo 'waiting for end xp of '
-      echo end_xp
     end
     equipment_manager.empty_hands
     fput "get my #{settings.hand_armor}"
     fput "wear my #{settings.hand_armor}"
+    timing_end('Mechanical Lore', timing_data)
     return true
   end
 
 
   def braid_to_fail(magic_state, item)
-    return if left_hand || right_hand
+    if left_hand || right_hand
+      echo 'EMPTY YOUR HANDS'
+      pause 5
+      return
+    end
     return unless forage?(item)
     loop do
       maybe_prepare(magic_state)
@@ -454,11 +491,14 @@ module MY_COMMON
   end
 
   def train_appraisal(timers)
+    return unless DRSkill.getxp('Appraisal') < 29
     return unless can_train_appraisal(timers)
+    timing_data = timing_start('Appraisal')
     bput('open my pouch', 'You open', 'already open', 'tied off')
     wait_for_script_to_complete('appraisal') if can_train_appraisal(timers)
     bput('close my pouch', 'You close', 'That is')
     timers[:appraisal_timer] = Time.now
+    timing_end('Appraisal', timing_data)
   end
 
   def train_perception_kg(timers)
@@ -468,6 +508,7 @@ module MY_COMMON
   end
 
   def sanowret
+    return unless magic_locked
     if(DRSkill.getxp('Arcana') < 20)
       bput('gaze my sanowret crystal', 'You gaze intently', 'I could not find', 'do that here', 'good place for that')
     end
@@ -483,7 +524,7 @@ module MY_COMMON
 
 
   def go_in_vault
-    arches = ['first arch', 'second arch', 'third arch']
+    arches = ['first arch', 'second arch', 'third arch', 'fourth arch']
     inside = false
     archidx = 0
     until (inside)
@@ -540,18 +581,20 @@ module MY_COMMON
 
 
   def train_outdoorsmanship(magic_state)
-    echo 'prepare to train outdoormanship'
     start_xp = DRSkill.getxp('Outdoorsmanship')
     end_xp = start_xp + 12
-    echo 'end_xp'
-    echo end_xp
+
+
+    timing_data = timing_start('Outdoorsmanship')
     until(DRSkill.getxp('Outdoorsmanship') > end_xp || DRSkill.getxp('Outdoorsmanship')  > 27)
       echo 'outdoormanship cycle'
       maybe_prepare(magic_state)
 
       wait_for_script_to_complete('outdoorsmanship')
       cast_next_spell_without_filler(magic_state)
+      train_perception_kg(magic_state[:timers])
     end
+    timing_end('Outdoorsmanship', timing_data)
   end
 
 

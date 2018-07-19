@@ -73,22 +73,19 @@ class Magic
 
     alt_cycle = [
       'Melee Mastery',
+      'Forging',
       'Mechanical Lore',
       'Scholarship',
       'Theurgy',
       'Athletics',
-      'Engineering',
-      'Forging',
-      'Outdoorsmanship'
+      'Outdoorsmanship',
+      'Forging'
     ]
     alt_idx = 0
 
     @training_room = (@settings.training_rooms || [@settings.safe_room]).sample
     while true
 
-      walk_to(@training_room)
-
-      check_listening(lesson_state, settings)
       #check_teaching(lesson_state, settings)
 
       pause 1
@@ -100,17 +97,19 @@ class Magic
       # end
 
       UserVars.magic_skills = ['Warding', 'Augmentation']
-      until((magic_locked && DRSkill.getxp('Arcana') > 30) ||  mana < 20)
-        echo 'cycle magic...'
-        choose_next_spell(magic_state)
-        prepare_next_spell(magic_state)
-        pause 5 unless cast_next_spell(magic_state)
-      end
-      train_appraisal(timers)
+      # until((magic_locked && DRSkill.getxp('Arcana') > 30) ||  mana < 20)
+      #   echo 'cycle magic...'
+      #   choose_next_spell(magic_state)
+      #   prepare_next_spell(magic_state)
+      #   pause 5 unless cast_next_spell(magic_state)
+      # end
+      # train_appraisal(timers)
       unless DRSkill.getxp(alt_cycle[alt_idx]) > 28
         case alt_cycle[alt_idx]
         when 'Mechanical Lore'
           walk_to(@training_room)
+
+          check_listening(lesson_state, settings)
           train_mechanical_lore(magic_state)
         when 'Forging'
           if(DRSkill.getxp('Forging') < 16)
@@ -129,6 +128,8 @@ class Magic
           train_appraisal(timers)
         when 'Outdoorsmanship'
           walk_to(@training_room)
+
+          check_listening(lesson_state, settings)
           train_outdoorsmanship(magic_state)
           train_appraisal(timers)
         when 'Scholarship'
@@ -140,7 +141,7 @@ class Magic
         when 'Melee Mastery'
           store_crafting(settings)
           wait_for_script_to_complete('hunting-buddy')
-          wait_for_script_to_complete('hunting-buddy', 'back')
+          wait_for_script_to_complete('hunting-buddy', ['back'])
           wait_for_script_to_complete('crossing-repair')
         when 'First Aid'
           walk_to(@training_room)
@@ -151,8 +152,8 @@ class Magic
         end
       end
 
-      train_appraisal(timers)
-      train_attunement(magic_state)
+      #train_appraisal(timers)
+      #train_attunement(magic_state)
       alt_idx = (alt_idx+1) % alt_cycle.length
       UserVars.cycle_index = alt_idx
 

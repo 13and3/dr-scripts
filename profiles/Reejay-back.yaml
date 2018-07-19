@@ -1,0 +1,28 @@
+---
+# https://elanthipedia.play.net/Cleric#Circle_Requirements
+# 3 Magics: Arcana, Augmentation, Attunement
+# 3 Weapons (only 1 is needed to circle): Brawling, Heavy Thrown, Large Blunt
+# 1 Armor: Chain Armor (does not include Shield Usage)
+# 4 Survivals: Athletics, Perception, Evasion, Outdoorsmanship
+# 4 Lores (only 3 are needed to circle): Appraisal, Tactics, Scholarship, Mechanical Lore
+
+# Eventually you will need to train 1 more Weapon to circle (for a total of 2)
+
+# Eventually you will need to train 2 more Magics to circle (for a total of 5)
+# However, you will probably end up training them all since they each have very useful spells
+# The other Magic skills are: Targeted Magic, Warding, Debilitation, Utility
+
+# Eventually you will need to train 1 more Lore to circle (for a total of 4)
+
+# Hunting settings
+hunting_info:
+- :zone: grass_eels
+  stop_on:
+  - Light Thrown
+
+dance_threshold: 0
+training_abilities:
+buff_spells:
+offensive_spells:
+weapon_training:
+  Light Thrown: throwing axe

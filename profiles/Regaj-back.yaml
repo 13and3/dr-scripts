@@ -1,0 +1,31 @@
+
+hunting_info:
+- :zone: grass_eels
+  stop_on:
+  - Large Edged
+
+# Combat settings
+ambush: false
+training_abilities:
+  Tactics: 30
+  Hunt: 80
+weapon_training:
+  Large Edged: broadsword
+
+priority_weapons:
+  - Large Edged
+backstab:
+
+use_stealth_attack: false
+use_stealth_attacks: false
+dont_stalk: true
+dance_skill: Large Edged
+
+ambush: false
+dance_threshold: 0
+
+stances:
+  Large Edged:
+  - Shield Usage
+  - Parry
+  - Evasion

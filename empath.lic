@@ -36,7 +36,6 @@ class Empath
         appraisal_timer: nil,
         power_timer: nil
     }
-
     lesson_state = {}
     @magic_state = {
         spells: settings.waggle_sets['empathy'],
@@ -54,27 +53,23 @@ class Empath
 
     cycle = [
       'First Aid',
+      'Forging',
       'Outdoorsmanship',
+      'Engineering',
       'Athletics',
-      'Forging',
-      'Engineering',
-      'Outfitting',
-      'Forging',
-      'Engineering',
       'Outfitting',
       'Mechanical Lore',
-      #'Empathy',
+      'Forging',
       'Defending'
     ]
     get_crafting(settings)
-    idx = -1 # UserVars.cycle_index || -1
+    idx = 0 #UserVars.cycle_index || -1
     while true
       pause 1
       fput "remove #{settings.hand_armor}"
       fput "stow #{settings.hand_armor}"
       pause 1
       idx = (idx + 1) % cycle.length
-      walk_to(@training_room)
       case cycle[idx]
       when 'Magic'
         get_ingots
@@ -102,13 +97,11 @@ class Empath
         echo 'walk to...'
         echo @training_room
         walk_to(@training_room)
-        check_listening(lesson_state, settings)
-        check_teaching(lesson_state, settings)
         train_mechanical_lore(magic_state)
         train_appraisal(timers)
       when 'Forging'
         vol = deed_ingot_volume
-        if(vol < 12)
+        if(vol < 18)
           echo 'need more ingot!'
           exit
         end
@@ -141,9 +134,9 @@ class Empath
         sanowret
         get_ingots
         walk_to(@training_room)
-        train_appraisal(timers)
         check_listening(lesson_state, settings)
         check_teaching(lesson_state, settings)
+        train_appraisal(timers)
         train_first_aid(magic_state, chart_data)
         train_appraisal(timers)
       else
@@ -248,10 +241,12 @@ class Empath
     return
     walk_to(8773)
 
-
+    found_ingot = false
     until(bput('get ing from bucket', 'You get', 'What were').include?('What were'))
       bput("stow my ing in my #{@ingot_container}", 'You put')
+      found_ingot = true
     end
+    return unless found_ingot
     bput("stow my ing in my #{@ingot_container}", 'You put', 'Stow what?')
 
     walk_to(8285)

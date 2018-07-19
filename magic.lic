@@ -23,7 +23,6 @@ class Magic
       [{ name: 'bare', regex:/bare/i, optional: true, description: 'pass to not forage'}]
     ]
     @args = parse_args(arg_definitions)
-    echo @args
     # arg_definitions = [
     #   [{ name: 'magic', regex:/magic/i, description: 'just trains magic until locked'}],
     #   [{ name: 'rtr', regex: /rtr/i, description: 'Runs Read the Ripples' }]
@@ -44,7 +43,6 @@ class Magic
     @ap_source = settings.astral_plane_training['train_source']
     @ap_destination = settings.astral_plane_training['train_destination']
     @spells = settings.waggle_sets['astrology-magic']
-    echo @spells
     @spell_index = -1
     @prediction_pool_target = settings.astrology_use_full_pools ? 10 : settings.astrology_pool_target
 
@@ -82,21 +80,23 @@ class Magic
     echo " Flags['rtr-expire'].nil? #{Flags['rtr-expire'].nil?}" if UserVars.astrology_debug
     echo " Flags['rtr-expire'] = #{Flags['rtr-expire']}" if UserVars.astrology_debug
     alt_cycle = [
-      'Athletics',
-      'Mechanical Lore',
-      'First Aid',
-      'Athletics',
-      'Outdoorsmanship',
       'Melee Mastery',
       'Athletics',
       'Engineering',
+      'Melee Mastery',
       'Athletics',
-      'Forging'
+      'Forging',
+      'Mechanical Lore',
+      'Melee Mastery',
+      'Athletics',
+      'Forging',
+      'First Aid',
+      'Outdoorsmanship'
       #'First Aid',
       #'Melee Mastery',
       #'Athletics'
     ]
-    alt_idx = 5 # UserVars.cycle_index || 0
+    alt_idx = 0
 
     Flags['astrology-ready-to-observe'] = true
     @training_room = (@settings.training_rooms || [@settings.safe_room]).sample
@@ -105,9 +105,6 @@ class Magic
 
       check_listening(lesson_state, settings)
       #check_teaching(lesson_state, settings)
-
-      echo 'astrology ready?'
-      echo Flags['astrology-ready-to-observe']
 
 
       # if should_pop
@@ -492,7 +489,7 @@ class Magic
         perc_time = Time.now
       end
       res = @constellations.find { |body| /As your consciousness drifts amongst the currents of Fate, .* #{body['name']}/i =~ line }
-      observe(res['name'], settings) unless res.nil?
+      observe(res['name']) unless res.nil?
     end
     nil
   end
@@ -536,15 +533,11 @@ class Magic
     cast_next_spell_without_filler(magic_state)
 
     night = vis_bodies.find { |body| body['constellation'] }
-    echo 'night'
-    echo night
     maybe_prepare(magic_state)
     best_eye_data = vis_bodies
                     .select { |data| @have_telescope || !data['telescope'] }
                     .max_by { |data| [data['pools'].values.compact.size, data['circle']] }
 
-    echo 'best_eye_data'
-    echo best_eye_data
     echo(" best_eye_data = #{best_eye_data}") if UserVars.astrology_debug
 
     waitrt?
@@ -559,8 +552,6 @@ class Magic
           data['pools'].values.compact.size > best_eye_data['pools'].values.compact.size
       end
 
-      echo 'things to try'
-      echo things_to_try
 
       things_to_try << best_eye_data
 
@@ -579,7 +570,7 @@ class Magic
         result == 'Roundtime'
       end
     else
-      until observe(best_eye_data['name'],)
+      until observe(best_eye_data['name'])
         if Flags['bad-search']
           check_heavens(magic_state)
           return
@@ -612,20 +603,23 @@ class Magic
         return 'Roundtime'
       when /open it/
         bput('open my telescope', 'extend your telescope')
-        return observe(body, settings)
+        return observe(body)
       when /The pain is too much/
         get_healed
-        return observe(body, settings)
+        return observe(body)
       end
 
-      result = bput('peer telescope', 'You peer aimlessly through your telescope', 'open it to make any use of it', 'You see nothing regarding the future', 'The pain is too much', 'Roundtime')
+      result = bput('peer telescope', 'You peer aimlessly through your telescope', 'Clouds obscure where', 'open it to make any use of it', 'You see nothing regarding the future', 'The pain is too much', 'Roundtime')
       case result
+      when /Clouds obscure where/
+        wait_for_script_to_complete('buff')
+        return observe(body)
       when /The pain is too much/
         get_healed
-        return observe(body, settings)
+        return observe(body)
       when /open it/
         bput('open my telescope', 'extend your telescope')
-        return observe(body, settings)
+        return observe(body)
       end
       @equipment_manager.empty_hands
       result

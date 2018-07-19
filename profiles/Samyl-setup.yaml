@@ -1,0 +1,630 @@
+---
+# https://elanthipedia.play.net/Moon_mage#Circle_Requirements
+# 4 Magics: Augmentation, Attunement, Arcana, Targeted Magic/Debilitation (Does not include Lunar Magic or Astrology)
+# 4 Survivals: Perception, Athletics, Evasion, Skinning (Does not include Thievery)
+# 3 Lores: Appraisal, Tactics, Mechanical Lore (Does not include Scholarship)
+# 2 Additional: Astrology, Scholarship
+
+# It is recommended to get a target or debilitation spell for your second circle. (e.g. Dinazen Olkar or Calm)
+# Please see the 'offensive_spells:' setting below for a commented (unused) example. Uncomment to begin usage (remove #'s).
+
+# Eventually you will need to train 3 more Magics to circle (for a total of 7)
+# Eventually you will need to train 3 more Magics to circle (for a total of 7)
+# Eventually you will need to train 1 more Survival to circle (for a total of 5)
+
+crossing_training:
+- Augmentation
+- Warding
+- Utility
+- Scholarship
+- Astrology
+- Attunement
+- Appraisal
+- Athletics
+- Outdoorsmanship
+- Mechanical Lore
+- Forging
+- Engineering
+
+
+gem_pouch_adjective: black
+tie_gem_pouches: false
+appraisal_training:
+  - pouches
+
+# Hunting settings
+training_manager_hunting_priority: true
+training_manager_priority_skills:
+- Targeted Magic
+- Shield Usage
+- Large Edged
+- Heavy Thrown
+hunting_info:
+- :zone: young_ogres
+  :duration: 60
+  stop_on:
+  - Melee Mastery
+  - Sorcery
+
+
+buff_spells:
+  Shadows:
+    abbrev: Shadows
+    recast: 1
+    mana: 1
+    cambrinth:
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+  Cage of Light:
+    abbrev: col
+    moon: true
+    recast: 1
+    mana: 15
+    cambrinth:
+      - 6
+      - 6
+  Seer's Sense:
+    abbrev: seer
+    recast: 1
+    mana: 15
+    cambrinth:
+      - 6
+      - 7
+  Psychic Shield:
+    abbrev: psy
+    recast: 1
+    mana: 7
+    cambrinth:
+      - 10
+      - 10
+      - 10
+  Aura Sight:
+    abbrev: aus
+    recast: 1
+    mana: 5
+    cambrinth:
+      - 10
+      - 10
+      - 10
+  Clear Vision:
+    abbrev: cv
+    recast: 1
+    mana: 1
+    cambrinth:
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+
+
+classes_to_teach:
+  - Lunar Magic
+  - Targeted Magic
+
+pupils:
+  - Cattii
+
+
+stances:
+  Large Edged:
+  - Parry
+  - Evasion
+  - Shield Usage
+  Large Blunt:
+  - Shield Usage
+  - Evasion
+  - Parry
+  Brawling:
+  - Evasion
+  - Shield Usage
+  - Parry
+  Heavy Thrown:
+  - Evasion
+  - Shield Usage
+  - Parry
+
+typeahead: 2
+# Gear settings
+gear:
+# - :adjective: example
+#   :name: gear
+#   :is_leather: true
+#   :hinders_lockpicking: false
+#   :is_worn: true
+- :adjective: storm-bull
+  :name: gloves
+  :is_leather: true
+  :hinders_lockpicking: true
+  :is_worn: true
+- :name: leathers
+  :is_leather: true
+  :hinders_lockpicking: false
+  :is_worn: true
+- :name: balaclava
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: target
+  :name: shield
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: parry
+  :name: stick
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: brass
+  :name: knuckles
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: elbow
+  :name: spikes
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: pine-handled
+  :name: sledgehammer
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+- :adjective: short-handled
+  :name: kris
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+- :adjective: hurling
+  :name: axe
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+- :name: axe
+  :adjective: battle
+  :is_worn: false
+  :is_leather: false
+  :swappable: false
+- :name: mace
+  :is_worn: false
+  :is_leather: false
+  :swappable: false
+gear_sets:
+  standard:
+  - leathers
+  - balaclava
+  - storm-bull gloves
+  - parry stick
+  - elbow spikes
+  - target shield
+  - brass knuckles
+
+
+
+# Combat settings
+
+# Uncomment (remove #'s) to train Targeted Magic/Debilitation with the listed spells (or change to use different spells).
+offensive_spells:
+# - offensive_spells
+#   skill: Targeted Magic
+#   name: Burn
+#   abbrev: burn
+#   moon: true
+#   cast_only_to_train: true
+#   mana: 7
+  - skill: Sorcery
+    name: Stun Foe
+    abbrev: sf
+    recast_every: 1
+    cast_only_to_train: true
+    mana: 7
+  - skill: Sorcery
+    name: Stun Foe2
+    abbrev: sf
+    recast_every: 1
+    cast_only_to_train: true
+    mana: 7
+    harmless: true
+  - skill: Targeted Magic
+    name: Dinazen Olkar
+    abbrev: do
+    recast_every: 30
+    cast_only_to_train: false
+    mana: 11
+# - skill: Debilitation
+#   name: Calm
+#   abbrev: calm
+#   cast_only_to_train: true
+#   mana: 6
+#   harmless: true
+
+
+
+have_telescope: true
+have_divination_bones: true
+divination_bones_storage:
+  container: tube
+  tied:
+
+weapon_training:
+  Large Edged: battle axe
+  Heavy Thrown: hurling axe
+  Large Blunt: mace
+  Brawling: ''
+use_stealth_attacks: false
+#use_stealth_attacks: false
+skinning:
+  skin: true
+  arrange_all: false
+  arrange_count: 0
+  tie_bundle: true
+
+# Non-combat settings
+exp_timers:
+  Astrology: 200
+  Attunement: 130
+
+braid_item: grass
+hand_armor: gloves
+combat_trainer_action_count: 100
+
+fatigue_regen_threshold: 85
+fatigue_regen_action: bob
+combat_trainer_target_increment: 8
+
+
+#ham_room: 19162F
+listen: true
+safe_room: 5713 #empath guild
+vine_room: 851 #pine needle path
+#safe_room: 2039
+#vine_room: 2039
+
+
+held_cambrinth: true
+stored_cambrinth: true
+cambrinth: cambrinth orb
+cambrinth_cap: 108
+favor_god: Meraud
+favor_goal: 35
+
+use_harness_when_arcana_locked: true
+
+waggle_sets:
+  sorcery:
+    Stun Foe: &sf
+      skill: Sorcery
+      name: Stun Foe
+      abbrev: sf
+      recast_every: 1
+      mana: 7
+  standard:
+    Clear Vision: &cv
+      skill: Augmentation
+      abbrev: CV
+      mana: 45
+    Shadows: &shadows
+      skill: Augmentation
+      abbrev: SHADOWS
+      mana: 46
+    Piercing Gaze: &pg
+      skill: Utility
+      abbrev: pg
+      mana: 38
+    Psychic Shield: &psy
+      skill: Warding
+      abbrev: PSY
+      mana: 37
+    Aura Sight: &aus
+      skill: Augmentation
+      abbrev: aus
+      mana: 37
+    Cage Of Light: &col
+      skill: Warding
+      moon: true
+      abbrev: COL
+      mana: 29
+      alt: *psy
+    Thoughtcast: &tho
+      skill: Utility
+      abbrev: thou
+      mana: 35
+    Seer's Sense: &seer
+      skill: Augmentation
+      use_auto_mana: false
+      abbrev: seer
+      mana: 30
+    Refractive Field: &rf
+      skill: Utility
+      abbrev: RF
+      use_auto_mana: true
+      invisibility: true
+      cast: cast samyl
+      mana: 37
+      after:
+        - message: release rf
+          matches:
+            - The refractive field
+            - Release what?
+    Rend: &rend
+      abbrev: REND
+      skill: Utility
+      use_auto_mana: true
+      cast: cast samyl
+      mana: 25
+    Shadowling: &shadowling
+      abbrev: shadowling
+      mana: 35
+      recast_every: 1
+      after:
+        - message: invoke shadowling
+          matches:
+            - You gesture
+            - Invoke what?
+  default:
+    Shadowling :
+      abbrev: shadowling
+      mana: 15
+      cambrinth:
+        - 5
+        - 5
+        - 5
+        - 3
+      recast_every: 1
+      after:
+        - message: invoke shadowling
+          matches:
+            - You gesture
+            - Invoke what?
+    Aura Sight:
+      abbrev: aus
+      recast_every: 1
+      mana: 15
+      cambrinth:
+        - 5
+        - 5
+        - 5
+        - 5
+    Piercing Gaze :
+      abbrev: pg
+      recast_every: 1
+      mana: 20
+      cambrinth:
+        - 5
+        - 5
+        - 5
+        - 5
+    Clear Vision:
+      abbrev: cv
+      recast_every: 1
+      mana: 20
+      cambrinth:
+        - 10
+        - 10
+        - 5
+        - 5
+    Thoughtcast :
+      abbrev: thoughtcast
+      recast_every: 1
+      mana: 15
+      cambrinth:
+        - 5
+        - 5
+        - 5
+    Seer's Sense:
+      abbrev: seer
+      recast_every: 1
+      mana: 15
+      cambrinth:
+        - 5
+        - 5
+        - 5
+  Symbiosis:
+    Focus Moonbeam: &sym_fm
+      abbrev: fm
+      mana: 1
+      symbiosis: true
+      cambrinth:
+        - 2
+      moon: true
+      alt: *tho
+
+  astrology-magic:
+    - *col
+    - *aus
+    - abbrev: fm
+      mana: 1
+      symbiosis: true
+      cambrinth:
+        - 2
+      moon: true
+      alt: *tho
+
+
+astrology_use_full_pools: false
+astrology_pool_target: 4
+
+runestones:
+  - imnera runestone
+  - calavarite runestone
+  - rhodonite runestone
+
+training_spells_max_threshold: 2
+train_with_spells: true
+combat_spell_training:
+  Augmentation : *aus
+  Warding : *psy
+  Utility : *tho
+  Sorcery : *sf
+training_spells:
+  Augmentation : *aus
+  Warding : *psy
+  Utility : *tho
+crafting_training_spells:
+  Augmentation : *aus
+  Warding : *psy
+  Utility : *tho
+
+
+workorder_min_items: 2
+workorder_max_items: 2
+
+engineering_room: 8250
+outfitting_room: 8250
+train_workorders:
+  - Blacksmithing
+  - Tailoring
+  - Shaping
+  #- Remedies
+work_order_disciplines:
+  - Blacksmithing #Forging
+  #- Tailoring #Outfitting
+  #- Shaping #Engineering
+  #- Remedies #Alchemy
+
+forging_tools:
+  - ball-peen hammer
+  - tong
+  - bellow
+  - shovel
+carving_tools:
+  - chisels
+  - rifflers
+  - rasp
+shaping_tools:
+  - carving knife
+  - shaper
+  - drawknife
+  - rasp
+
+crafting_container: duffel bag
+storage_containers:
+  - book bag
+
+combat_spell_training_max_threshold: 5
+lockpick_room_id: 8246
+priority_weapons:
+  - Large Edged
+dance_threshold: 0
+retreat_threshold: 9
+dance_skill: Brawling
+training_abilities:
+  Tactics: 20
+  PercMana: 240
+  Astro: 300
+  Hunt: 80
+  Collect: 120
+
+
+loot_additions:
+  - nugget
+  - bar
+  - dira
+  - runestone
+
+
+picking_box_source: haversack
+use_lockpick_ring: true
+skip_lockpick_ring_refill: true
+sell_loot_pouch: false
+full_pouch_container: book bag
+
+workorder_diff:
+  blacksmithing: challenging
+  weaponsmithing: hard
+  shaping: challenging
+  alchemy: hard
+  tailoring: hard
+workorder_recipes:
+  shaping:
+    #- wood band
+    # - wood bracelet
+    # - wood anklet
+    #3
+    
+    - cloak pin
+    - hairpin
+    - tailband
+    - shallow cup
+    #   shape(7, 'wood band', 'band')
+    # elsif rank <= 50 # Tier 2 Very Easy
+    #   shape(7, 'wood bracelet', 'bracelet')
+    # elsif rank <= 100 # Tier 3  Easy
+    #   shape(7, 'wood cloak pin', 'cloak pin')
+    # elsif rank <= 175 # Tier 4  Simple
+    #   shape(7, 'pair of wood earrings', 'earrings')
+  blacksmithing:
+    #- a shallow metal cup
+
+    #- a short metal mug
+    #- a tall metal mug
+
+    - a back scratcher
+    # if rank <= 25 # Tier 1 - Extremely Easy
+    #   smith('a shallow metal cup')
+    # elsif rank <= 50 # Tier 2 - Very Easy
+    #   smith('a short metal mug')
+    # elsif rank <= 100 # Tier 3 - Easy
+    #   smith('a back scratcher')
+    # elsif rank <= 175 # Tier 4 - Simple
+    #   smith('a metal ankle band')
+  tailoring:
+    - knitted socks 
+    #- knitted mittens
+    # if rank <= 25 # Tier 1  Extremely Easy
+    #   sew(5, 'knitted socks', 'socks')
+    # elsif rank <= 50 # Tier 2 Very Easy
+    #   sew(5, 'knitted mittens', 'mittens')
+    # elsif rank <= 100 # Tier 3  Easy
+    #   sew(5, 'knitted hat', 'hat')
+    # elsif rank <= 175 # Tier 4  Simple
+    #   sew(5, 'knitted gloves', 'gloves')
+
+
+#hunting_buddies:
+#  - Cattii
+
+empty_hunting_room_messages:
+- Is anyone else in here?
+- Is anyone hunting here? Speak now or hold your peace.
+- This looks like a good room. I hope I'm not taking it from anyone.
+- My eyes aren't so good. Did I miss someone in the room?
+
+
+
+listen_skills:
+- Life Magic
+- Large Edged
+- Offhand Weapon
+- Melee Mastery
+- Attunement
+- Arcana
+- Augmentation
+- Utility
+- Warding
+- Athletics
+- Perception
+- First Aid
+- Outdoorsmanship
+- Scholarship
+- Mechanical Lore
+- Appraisal
+- Tactics
+- Stealth
+- Evasion
+- Parry Ability
+- Small Edged
+- Defending
+- Light Armor
+- Shield Usage
+- Targeted Magic
+- Debilitation
+- Locksmithing
+- Skinning
+- Forging
+- Engineering
+- Outfitting
+- Alchemy

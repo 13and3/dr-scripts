@@ -54,11 +54,14 @@ class Thief
         'Thievery',
         'Athletics',
         'Forging',
+        'Outfitting',
+        'First Aid',
         'Melee Mastery',
         'Outdoorsmanship',
         'Thievery',
         'Engineering',
         'Mechanical Lore',
+        'First Aid',
         'Melee Mastery',
         'Thievery'
     ]
@@ -69,10 +72,12 @@ class Thief
       fput "stow #{settings.hand_armor}"
       pause 1
       idx = (idx + 1) % cycle.length
-      walk_to(@training_room)
       case cycle[idx]
       when 'Thievery'
+        walk_to(settings.lockpick_room_id)
+        thievery_timing = timing_start('Thievery')
         wait_for_script_to_complete('steal')
+        timing_end('Thievery', thievery_timing)
         train_appraisal(timers)
       when 'Athletics'
         train_athletics(settings)
@@ -93,6 +98,10 @@ class Thief
         get_crafting(settings)
         train_appraisal(timers)
         train_forging(timers, 'blacksmithing')
+      when 'Outfitting'
+        get_crafting(settings)
+        train_appraisal(timers)
+        train_outfitting(timers, 'tailoring')
       when 'Engineering'
         get_crafting(settings)
         train_appraisal(timers)
@@ -105,15 +114,16 @@ class Thief
         wait_for_script_to_complete('pick')
         train_appraisal(timers)
         train_defending(settings)
+        wait_for_script_to_complete('hunting-buddy', ['back'])
         walk_to(settings.lockpick_room_id)
         wait_for_script_to_complete('pick')
         wait_for_script_to_complete('crossing-repair')
         train_appraisal(timers)
       when 'First Aid'
         walk_to(@training_room)
-        train_appraisal(timers)
         check_listening(lesson_state, settings)
         check_teaching(lesson_state, settings)
+        train_appraisal(timers)
         train_first_aid(state, chart_data)
         train_appraisal(timers)
       else
@@ -263,7 +273,9 @@ class Thief
   def train_athletics(settings)
     start_exp = DRSkill.getxp('Athletics')
     end_exp = [start_exp + 15, 29].min
+    timing_data = timing_start('Athletics')
     crossing_athletics(settings, end_exp)
+    timing_end('Athletics', timing_data)
   end
 
 end

@@ -1,0 +1,526 @@
+---
+
+typeahead: 4
+
+crossing_training:
+
+  - Forging
+
+  - Appraisal
+  - Athletics
+  - Attunement
+  - Outfitting
+  - Augmentation
+  - Warding
+  - Utility
+  - Mechanical Lore
+
+  #- Alchemy
+  - Scholarship
+  - Outdoorsmanship
+  - Engineering
+
+  #- First Aid
+
+  # - Performance
+  #- Utility
+  # # 
+  # - Alchemy
+  #- Life Magic
+
+# Perception 
+# Arcana
+# Empathy
+# Scholarship
+
+mine_for_outdoorsmanship: false
+#hunting_buddies:
+#  - Samyl
+
+#Training manager will hunt when either of the two skills are <= 6
+priority_skills_lower_limit: 6
+training_manager_hunting_priority: true
+training_manager_priority_skills:
+ - Parry Ability
+ - Shield Usage
+
+
+picking_box_source: backpack
+use_lockpick_ring: true
+skip_lockpick_ring_refill: true
+
+
+stop_hunting_if_bleeding: false
+training_manager_town_duration: 30
+hunting_info:
+- :zone: young_ogres
+  :duration: 60
+  stop_on:
+  - Defending
+  args:
+  - d4
+gear:
+- :name: shield
+  :adjective: small
+  :is_worn: true
+  :hinders_lockpicking: true
+- :name: hauberk
+  :adjective: quilted
+  :is_leather: true
+  :is_worn: true
+  :hinders_lockpicking: false
+- :name: balaclava
+  :adjective: mail
+  :is_leather: false
+  :is_worn: true
+  :hinders_lockpicking: true
+- :name: gloves
+  :adjective: mail
+  :is_leather: false
+  :is_worn: true
+  :hinders_lockpicking: true
+- :name: stick
+  :adjective: parry
+  :is_leather: false
+  :is_worn: true
+  :hinders_lockpicking: true
+gear_sets:
+  standard:
+  - a lumium mail balaclava crafted from tempered links
+  - a lumium target shield with a tempered face
+  - lumium mail gloves
+  - a quilted burlap hauberk sealed with protective wax
+  - a simple steel parry stick with a tempered finish
+  casual: []
+weapon_training:
+  Brawling: ''
+
+buff_spells:
+  Gift of Life:
+    abbrev: GoL
+    recast: 1
+    mana: 7
+    cambrinth:
+      - 10
+      - 10
+      - 10
+  Refresh:
+    abbrev: refresh
+    recast: 1
+    mana: 4
+    cambrinth:
+      - 10
+      - 10
+      - 10
+      - 10
+      - 10
+#  Heal Wounds:
+#    abbrev: hw
+#    mana: 5
+#    cambrinth:
+#      - 10
+#      - 10
+#    recast_every: 120
+#    cast: cast chest int
+#  Heal Scars:
+#    abbrev: hs
+#    mana: 5
+#    cambrinth:
+#      - 10
+#      - 10
+#    recast_every: 120
+#    cast: cast chest int
+#  Cure Disease:
+#    abbrev: cd
+#    mana: 10
+#    recast_every: 120
+  Iron Constitution:
+    abbrev: IC
+    recast: 1
+    mana: 5
+    cambrinth:
+      - 10
+      - 10
+      - 10
+  Blood Staunching:
+    abbrev: bs
+    recast: 1
+    mana: 15
+    cambrinth:
+      - 10
+      - 10
+      - 10
+  Aggressive Stance:
+    abbrev: ags
+    recast: 1
+    mana: 5
+    cambrinth:
+      - 10
+      - 10
+      - 10
+
+
+use_stealth_attack: false
+use_stealth_attacks: false
+dont_stalk: true
+
+# Repair settings
+repair_withdrawal_amount: 10_000
+skip_repair: false
+repair_timer: 600
+repair_every: 10
+
+
+skinning:
+  skin: true
+  arrange_all: false
+  arrange_count: 0
+dance_skill: Brawling
+dance_actions:
+- bob
+- analyze
+
+Priority Defense: Evasion
+
+offensive_spells:
+# - skill: Targeted Magic
+#   name: Guardian Spirit
+#   abbrev: gs
+#   cyclic: true
+#   mana: 8
+#   harmless: true
+#   command: WARRIOR TO BEHAVIOR AGGRESSIVE
+- skill: Targeted Magic
+  name: Paralysis
+  abbrev: paralysis
+  mana: 11
+  harmless: true
+- skill: Debilitation
+  name: Lethargy
+  abbrev: lethargy
+  mana: 7
+  harmless: true
+#  harmless: true
+training_abilities:
+  Hunt: 80
+  App Quick: 60
+  Perc: 120
+  Collect: 120
+manipulate_threshold: 5
+listen: true
+safe_room: 5713 #empath guild
+vine_room: 851 #pine needle path
+
+#safe_room: 2039
+#vine_room: 2039
+
+engineering_room: 5713
+outfitting_room: 5713
+alchemy_room: 5713
+braid_item: grass
+empath_healing:
+  VH:
+  - 10
+  - 6
+  - 6
+  - 6
+  HW:
+  - 1
+  - 6
+  - 6
+  - 6
+  - 6
+  - 6
+  HS:
+  - 1
+  - 6
+  - 6
+  - 6
+  - 6
+  - 6
+
+crossing_training_force_cambrinth: false
+waggle_force_cambrinth: false
+use_harness_when_arcana_locked: true
+
+instrument: zills
+
+use_research: false
+research_skills:
+ - Life Magic
+ - Arcana
+ - Utility
+ - Augmentation
+ - Warding
+dedicated_camb_use: spell
+
+waggle_sets:
+  standard:
+    Cure Disease: &cd
+      skill: Utility
+      abbrev: cd
+      mana: 36
+    Iron Constitution: &ic
+      skill: Warding
+      abbrev: IC
+      mana: 35
+    Mental Focus: &mef
+      skill: Augmentation
+      use_auto_mana: true
+      abbrev: mef
+      mana: 37
+    Blood Staunching: &bs
+      skill: Utility
+      use_auto_mana: true
+      abbrev: bs
+      man: 28
+    Heal: &heal
+      skill: Utility
+      use_auto_mana: true
+      abbrev: heal
+      mana: 36
+  training: &training
+    Warding: &ward_sym
+      abbrev: ic
+      mana: 38
+      before:
+        - release symbiosis
+      symbiosis: false
+    Augmentation: &aug_sym
+      abbrev: refresh
+      mana: 1
+      symbiosis: true
+      before:
+        - release refresh
+    Utility: &util_sym
+      abbrev: heal
+      mana: 35
+      symbiosis: false
+      before:
+        - release symbiosis
+  empathy:
+    - *ward_sym
+    - *aug_sym
+    - *util_sym
+
+
+crafting_training_spells:
+ Warding: *ward_sym
+ Augmentation: *aug_sym
+ Utility: *util_sym
+ #Utility: *cd
+training_spells:
+ Warding: *ward_sym
+ Augmentation: *aug_sym
+ Utility: *util_sym
+ #Utility: *cd
+combat_spell_training:
+ Warding:
+    abbrev: ic
+    mana: 15
+    cambrinth:
+      - 10
+      - 5
+      - 5
+ Augmentation: *aug_sym
+ Utility:
+    abbrev: heal
+    mana: 15
+    cambrinth:
+      - 10
+      - 5
+      - 5
+ #Utility: *cd
+
+ignored_npcs:
+- warrior
+
+health_threshold: 20
+
+held_cambrinth: true
+stored_cambrinth: true
+cambrinth: man-in-the-moon
+cambrinth_items: 
+- name: man-in-the-moon
+  cap: 32
+  stored: true
+cambrinth_cap: 32
+quit_on_status_warning: true
+status_monitor_no_window: true
+sell_loot_pouch: false
+gem_pouch_adjective: purple
+tie_gem_pouches: false
+train_with_spells: true
+favor_god: Hodierna
+favor_goal: 35
+
+# Crafting
+
+storage_containers:
+  - backpack
+  - duffel bag
+ingot_container: duffel bag
+crafting_container: haversack
+crafting_items_in_container: haversack
+forging_belt: 
+  name: forger belt
+  items:
+    - ball-peen hammer
+engineering_belt:
+outfitting_belt:
+alchemy_belt: 
+  name: alchem belt
+  items:
+    - mortar
+    - pestle
+    - bowl
+    - mixing stick
+    - sieve
+workorder_diff:
+  weaponsmithing: hard
+  shaping: challenging
+  alchemy: hard
+  tailoring: hard
+train_workorders:
+  - Tailoring
+  - Shaping
+  - Remedies
+  - Weaponsmithing
+work_order_disciplines:
+  - Weaponsmithing #Forging
+  - Tailoring #Outfitting
+  - Shaping #Engineering
+  #- Remedies #Alchemy
+
+forging_tools:
+  - ball-peen hammer
+  - tong
+  - bellow
+  - shovel
+knitting_tools:
+ #- knitting needle
+  - sewing needle
+  - detailed yardstick
+  - slender awl
+  - slickstone
+  - distaff
+  - serrated scissors
+shaping_tools:
+  - carving knife
+  - shaper
+  - drawknife
+  - rasp
+alchemy_tools:
+  - mortar
+  - pestle
+  - bowl
+  - mixing stick
+  - sieve
+carving_tools:
+  - chisels
+  - rifflers
+  - rasp
+
+
+appraisal_training:
+  - pouches
+full_pouch_container: backpack
+
+sell_loot_pouch: false
+sell_loot_bundle: false
+
+workorder_min_items: 2
+workorder_max_items: 2
+
+classes_to_teach:
+  - First Aid
+
+
+pupils:
+  - Samyl
+  - Regaj
+
+workorder_recipes:
+  remedies:
+    #- itch salve
+    - neck salve
+    - abdominal salve
+    - chest salve
+    - head salve
+    #- neck potion
+    #- body ointment
+    #- body draught
+  shaping:
+    #1
+    #- wood band
+    #2
+    # - wood bracelet
+    # - wood anklet
+    # - wood pin
+    #3
+#    - cloak pin
+#    - hairpin
+#    - tailband
+    #4
+    - a wood amulet
+    - a wood medallion
+    #5
+    - a wood earcuff
+
+  weaponsmithing:
+    #2
+    # - a short metal mug
+    #3
+    # - a back scratcher
+    #4
+    - a metal kris
+    - a metal rapier
+    - a metal scimitar
+    - a metal sabre
+    - a metal hand axe
+  blacksmithing:
+    #2
+    # - a short metal mug
+    #3
+    # - a back scratcher
+    #4
+    - smooth knitting needles
+  tailoring:
+    #- knitted mittens
+    #- knitted headband
+    #50>
+    # - knitted slippers
+    # - knitted scarf
+    # - knitted booties
+    # - knitted hood
+    # - knitted hat
+    #75>
+#    - cloth dunce hat
+#    - a cloth scarf
+#
+#    - cloth sash
+#    - sleeveless cloth shirt
+#    - floppy cloth hat
+    - cloth tunic
+    # - knitted towel
+    # - knitted legwarmers
+    # - knitted gloves
+    # - knitted shirt
+    # - knitted skirt
+#     - smooth knitting needles
+#     - plain sewing needles
+#     - tapered knitting needles
+#     - ribbed sewing needles
+#     - knobby sewing needles
+#     - polished knitting needles
+#     - detailed yardstick
+#     - thin sewing needles
+
+use_own_ingot_type: bronze
+deed_own_ingot: true
+
+empty_hunting_room_messages:
+- Is anyone else in here?
+- Is anyone hunting here? Speak now or hold your peace.
+- This looks like a good room. I hope I'm not taking it from anyone.
+- I intend to practice here, is anyone else here?
