@@ -2,7 +2,7 @@
 custom_require.call(%w[drinfomon equipmanager events spellmonitor common common-arcana common-crafting common-healing common-items common-money common-travel common-summoning common-kg])
 
 
-class Empath
+class Thief
   include DRC
   include DRCI
   include DRCA
@@ -10,17 +10,14 @@ class Empath
   include MY_COMMON
 
   def initialize
-    exit unless DRStats.empath?
+    exit unless DRStats.trader?
 
-    UserVars.magic_skills = ['Warding', 'Augmentation', 'Utility']
 
     settings = get_settings
     @settings = settings
     @equipment_manager = EquipmentManager.new
-    #@equipment_manager.wear_equipment_set?('casual')
     chart_data = get_data('anatomy-charts').first_aid_charts
     @booktype = 'compendium'
-    @spells = settings.waggle_sets['empathy']
     @spell_index = -1
     @perception_timer = nil
     @appraisal_timer = nil
@@ -36,9 +33,11 @@ class Empath
         appraisal_timer: nil,
         power_timer: nil
     }
+
+    fput 'store default backpack'
+
     lesson_state = {}
-    @magic_state = {
-        spells: settings.waggle_sets['empathy'],
+    @state = {
         settings: settings,
         prepare_time: 0,
         spell_index: -1,
@@ -48,22 +47,28 @@ class Empath
         chart_state: {},
         max_concentration: DRStats.concentration
     }
-    magic_state = @magic_state
+    state = @state
 
 
-    fput 'store default pack'
     cycle = [
-      'Defending',
-      'First Aid',
-      'Forging',
-      'Outdoorsmanship',
-      'Engineering',
-      'Athletics',
-      'Outfitting',
-      'Mechanical Lore',
-      'Forging'
+        'Forging',
+        'Outfitting',
+        'Engineering',
+        'Outdoorsmanship',
+        'Mechanical Lore',
+        'First Aid',
+        'Athletics',
+        'Outdoorsmanship',
+        'Mechanical Lore',
+        'Scholarship',
+        'Outdoorsmanship',
+        'Forging',
+        'Outfitting',
+        'Engineering',
+        'Outdoorsmanship',
+        'Mechanical Lore',
+        'Melee Mastery'
     ]
-    get_crafting(settings)
     idx = UserVars.cycle_index || -1
     while true
       pause 1
@@ -72,75 +77,59 @@ class Empath
       pause 1
       idx = (idx + 1) % cycle.length
       case cycle[idx]
-      when 'Magic'
-        get_ingots
-        walk_to(@magic_state[:casting_room])
-        train_magic(@magic_state)
-        train_appraisal(timers)
-      when 'Empathy'
-        get_ingots
-        train_empathy(settings)
+      when 'Thievery'
+        walk_to(settings.lockpick_room_id)
+        thievery_timing = timing_start('Thievery')
+        wait_for_script_to_complete('steal')
+        timing_end('Thievery', thievery_timing)
         train_appraisal(timers)
       when 'Athletics'
-        get_ingots
         train_athletics(settings)
         train_appraisal(timers)
       when 'Outdoorsmanship'
-        get_ingots
         walk_to(@training_room)
         check_listening(lesson_state, settings)
         check_teaching(lesson_state, settings)
-        train_outdoorsmanship(magic_state)
+        train_outdoorsmanship(state)
         train_appraisal(timers)
       when 'Mechanical Lore'
-        sanowret
-        get_ingots
-        echo 'walk to...'
-        echo @training_room
         walk_to(@training_room)
-        train_mechanical_lore(magic_state)
+        check_listening(lesson_state, settings)
+        check_teaching(lesson_state, settings)
+        train_mechanical_lore(state)
         train_appraisal(timers)
       when 'Forging'
-        vol = deed_ingot_volume
-        if(vol < 18)
-          echo 'need more ingot!'
-          exit
-        end
         get_crafting(settings)
         train_appraisal(timers)
-        train_forging(timers, 'weaponsmithing')
+        train_forging(timers, 'blacksmithing')
       when 'Outfitting'
-        get_ingots
-        get_crafting(settings)
-        check_cloth
-        train_outfitting(timers)
-      when 'Engineering'
-        get_ingots
         get_crafting(settings)
         train_appraisal(timers)
-        train_engineering(timers)
+        train_outfitting(timers, 'tailoring')
+      when 'Engineering'
+        get_crafting(settings)
+        train_appraisal(timers)
+        train_engineering(timers, 'carving')
       when 'Scholarship'
-        echo 'DOING SCHOLARSHIP??'
-        sanowret
-        get_ingots
         train_scholarship unless DRSkill.getxp('Scholarship') > 15
         train_appraisal(timers)
-      when 'Defending'
-        if(DRSkill.getxp('Defending') < 12)
-          get_ingots
-          train_appraisal(timers)
-          train_defending(settings)
-          wait_for_script_to_complete('crossing-repair')
-          train_appraisal(timers)
-        end
+      when 'Lockpicking'
+        walk_to(settings.lockpick_room_id)
+        wait_for_script_to_complete('pick')
+      when 'Melee Mastery'
+        store_crafting(settings)
+        train_appraisal(timers)
+        wait_for_script_to_complete('hunting-buddy', ['stealth'])
+        train_defending(settings)
+        train_appraisal(timers)
+      when 'Trading'
+        wait_for_script_to_complete('trade')
       when 'First Aid'
-        sanowret
-        get_ingots
         walk_to(@training_room)
         check_listening(lesson_state, settings)
         check_teaching(lesson_state, settings)
         train_appraisal(timers)
-        train_first_aid(magic_state, chart_data)
+        train_first_aid(state, chart_data)
         train_appraisal(timers)
       else
         count = 0
@@ -155,22 +144,7 @@ class Empath
     end
   end
 
-  def check_cloth()
-    case bput('count my burlap cloth', 'I could not find', 'You count')
-    when 'I could not find'
-      walk_to(8285)
-      go_in_vault
-      case bput('get cloth from large shel', 'You get', 'I could not find')
-      when 'You get'
-        leave_vault
-      when 'What were you'
-        echo 'Oh no, no cloth'
-        exit
-      end
-    when 'You count'
-      echo 'Cloth found! continuing'
-    end
-  end
+
 
   def deed_ingot_volume
     res = bput('read my deed', 'Volume:\s*\d+')
@@ -180,52 +154,15 @@ class Empath
 
 
   def train_defending(settings)
-    echo 'maybe train defending??'
-    return unless DRSkill.getxp('Defending') < 12
-    @times_out_hunting = @times_out_hunting + 1 % 5
+    echo 'train defending'
+    return unless DRSkill.getxp('Small Edged') < 20
+    'echo passed'
+    @times_out_hunting = @times_out_hunting + 1 % 2
     store_crafting(settings)
     wait_for_script_to_complete('hunting-buddy')
+    wait_for_script_to_complete('crossing-repair') if @times_out_hunting == 0
     get_crafting(settings)
   end
-
-  def train_empathy(settings)
-    return unless DRSkill.getxp('Empathy') <= 30
-    room_list = get_data('town')['Crossing']['perceive_health_rooms']
-    echo 'room list'
-    echo room_list
-    room_list.push(8776)#forging clerk
-    room_list.push(16659)#outfitting clerk
-    room_list.push(19209)#engineer repairman
-    room_list.push(8860)#alchemy clerk
-
-
-    room_list.each do |room_id|
-      echo "room is #{room_id}"
-      maybe_prepare(@magic_state)
-      walk_to(room_id)
-      waitrt?
-      if(DRSkill.getxp("Attunement") < 32)
-        bput('power', 'You reach out')
-        waitrt?
-      elsif(DRSkill.getxp("Perception") < 32)
-        bput('hunt', 'Roundtime')
-        waitrt?
-      end
-      5.times do
-        break if bput('perceive health', 'You fail to sense', 'You sense:', 'You\'re not ready to do that again, yet') == 'You sense:'
-        pause 1
-        rt = waitrt?
-        pause 5 if rt.nil? || rt.zero?
-      end
-      waitrt?
-
-      cast_next_spell_without_filler_in_room(@magic_state)
-
-
-      break if DRSkill.getxp('Empathy') >= 30
-    end
-  end
-
 
 
   def crossing_athletics(settings, end_exp)
@@ -252,31 +189,6 @@ class Empath
     end
     cast_next_spell_without_filler_in_room(@magic_state) if checkcastrt < 2
     true
-  end
-
-  def get_ingots
-    return
-    walk_to(8773)
-
-    found_ingot = false
-    until(bput('get ing from bucket', 'You get', 'What were').include?('What were'))
-      bput("stow my ing in my #{@ingot_container}", 'You put')
-      found_ingot = true
-    end
-    return unless found_ingot
-    bput("stow my ing in my #{@ingot_container}", 'You put', 'Stow what?')
-
-    walk_to(8285)
-    go_in_vault
-    until(bput("get ing from #{@ingot_container}", 'You get', 'What were').include?('What were'))
-      bput('put ingot on large shelf in vault', 'You put')
-    end
-
-    leave_vault
-  end
-
-  def can_train_emapthy
-    return  @epath_timer.nil? || (Time.now - @empathy_timer) > 80 && DRSkill.getxp("Empathy") < 32
   end
 
   def stop_play
@@ -368,10 +280,12 @@ class Empath
   def train_athletics(settings)
     start_exp = DRSkill.getxp('Athletics')
     end_exp = [start_exp + 15, 29].min
+    timing_data = timing_start('Athletics')
     crossing_athletics(settings, end_exp)
+    timing_end('Athletics', timing_data)
   end
 
 end
 
 
-Empath.new
+Thief.new

@@ -1,27 +1,49 @@
 =begin
   Documentation: https://elanthipedia.play.net/Lich_script_repository#transfer-items
 =end
+custom_require.call(%w[common] )
 
 class ItemTransfer
+  include DRC
   def initialize
     arg_definitions = [
       [
         { name: 'source', regex: /^[A-z\s\-]+$/i, variable: true, description: 'Source container' },
-        { name: 'destination', regex: /^[A-z\s\-]+$/i, variable: true, description: 'Destination container' }
+        { name: 'destination', regex: /^[A-z\s\-]+$/i, variable: true, description: 'Destination container' },
+        { name: 'item', regex:/item/, variable: true, optional: true, description: 'specific item(s) to transfer'},
+        { name: 'boxes', regex:/box/, variable: false,  optional: true, description: 'only do boxes'}
       ]
     ]
     args = parse_args(arg_definitions)
     @source = args.source
     @destination = args.destination
+    @boxes = args.boxes
+    @item = args.item.split('=')[1] if args.item
+
 
     transfer_items
   end
 
   def transfer_items
-    fput("look in my #{@source}")
+    echo @item
+
+    if(@item)
+      until(bput("get my #{@item} from my #{@source}", 'What were you', 'You get').include?('What were you'))
+        bput("put #{@item} in #{@destination}", 'You put')
+      end
+      exit
+    end
+    if(@boxes)
+      fput("rummage /B my #{@source}")
+    else
+      fput("look in my #{@source}")
+    end
 
     while line = get
       if line =~ /In the .*#{@source} you see/
+        items = line
+        break
+      elsif line =~ /You rummage through a .*#{@source} looking for boxes and/
         items = line
         break
       end

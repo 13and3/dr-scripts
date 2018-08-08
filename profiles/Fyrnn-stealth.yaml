@@ -16,13 +16,43 @@
 
 # Hunting settings
 hunting_info:
-- :zone: endrus_serpents
+- :zone: grass_eels
+  :duration: 10
   stop_on:
-  - Light Thrown
+  - Stealth
 
-dance_threshold: 0
-training_abilities:
-buff_spells:
+retreat_before_hide: true
+
+
+
+gear_sets:
+  standard:
+    - round sipar
+    - ring balaclava
+    - quilted hauberk
+    - quilted gloves
+
+# Combat settings
+
+dont_stalk: false
+stalk: true
+ambush: true
+dance_threshold: 4
+dance_skill: Large Edged
 offensive_spells:
+training_abilities:
+  Stealth: 10
+  Collect: 60
+  PercMana: 60
 weapon_training:
-  Light Thrown: throwing axe
+  #Light Thrown: throwing spike
+  Heavy Thrown: light spear
+  Polearms: light spear
+  Large Edged: bastard sword
+  Twohanded Edged: bastard sword
+  #Small Edged: throwing spike
+  #Small Blunt: throwing spike
+  Crossbow: battle stonebow
+
+combat_trainer_action_count: 10
+combat_trainer_target_increment: 8

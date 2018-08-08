@@ -74,7 +74,7 @@ module DRCI
         trashcan = 'hollow' if DRRoom.room_objs.include?('dead tree with a darkened hollow near its base')
       end
 
-      if /^You (drop|put)/ =~ DRC.bput("put my #{item} in #{trashcan}", '^You drop', '^You put', "You're kidding, right", 'What were you referring to', "You can't do that")
+      if /^You (drop|put)/ =~ DRC.bput("put my #{item} in #{trashcan}", '^You drop', '^You put', "You're kidding, right", 'What were you referring to', 'Where do you want', "You can't do that")
         return
       end
     end

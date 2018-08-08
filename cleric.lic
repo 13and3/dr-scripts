@@ -55,6 +55,7 @@ class Magic
         appraisal_timer: nil,
         power_timer: nil
     }
+    fput 'store default backpack'
 
 
     @magic_state = {
@@ -72,12 +73,13 @@ class Magic
     magic_state = @magic_state
 
     alt_cycle = [
+      'Theurgy',
       'Melee Mastery',
+      'Theurgy',
       'Forging',
       'Mechanical Lore',
       'Scholarship',
       'Theurgy',
-      'Athletics',
       'Outdoorsmanship',
       'Forging'
     ]
@@ -86,6 +88,8 @@ class Magic
     @training_room = (@settings.training_rooms || [@settings.safe_room]).sample
     while true
 
+      train_athletics(magic_state, settings)
+      train_appraisal(timers)
       #check_teaching(lesson_state, settings)
 
       pause 1

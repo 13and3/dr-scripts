@@ -12,6 +12,7 @@ class Smelt
     EquipmentManager.new.empty_hands
 
     settings = get_settings
+    @adjustable_tongs = settings['adjustable_tongs']
     @bag = settings.crafting_container
     @bag_items = settings.crafting_items_in_container
     @belt = settings.forging_belt
@@ -90,12 +91,26 @@ class Smelt
   end
 
   def fuel
+    item = 'shovel'
+    item = 'tongs' if @adjustable_tongs
     pause 1
     waitrt?
-    get_crafting_item('shovel', @bag, @bag_items, @belt)
-    bput('push fuel with my shovel', 'roundtime')
+    get_crafting_item(item, @bag, @bag_items, @belt)
+    if(@adjustable_tongs)
+      case bput('adjust tongs', 'You can\'t','pull free the head of a shovel','readying them for use as tongs once more')
+      when 'You can\'t'
+        echo 'NOT ADJUSTABLE SHOVEL/TONGS :\'('
+        exit
+      when 'pull free the head of a shovel'
+        echo 'shovel ready'
+      when 'readying them for use as tongs once more'
+        bput('adjust tongs', 'You can\'t','pull free the head of a shovel','readying them for use as tongs once more')
+      end
+    end
+    bput("push fuel with my #{item}", 'roundtime')
+
     waitrt?
-    stow_crafting_item('shovel', @bag, @belt)
+    stow_crafting_item(item, @bag, @belt)
     stir
   end
 end

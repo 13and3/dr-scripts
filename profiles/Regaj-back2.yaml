@@ -1,8 +1,8 @@
 
 hunting_info:
-- :zone: endrus_serpents
+- :zone: grass_eels
   stop_on:
-  - Large Edged
+  - Twohanded Edged
 
 # Combat settings
 ambush: false
@@ -10,24 +10,24 @@ training_abilities:
   Tactics: 30
   Hunt: 80
 weapon_training:
-  Large Edged: longsword
+  Twohanded Edged: bastard sword
 
 stop_hunting_if_bleeding: false
 priority_weapons:
-  - Large Edged
+  - Twohanded Edged
 backstab:
 
 
 use_stealth_attack: false
 use_stealth_attacks: false
 dont_stalk: true
-dance_skill: Large Edged
+dance_skill: Twohanded Edged
 
 ambush: false
 dance_threshold: 0
 
 stances:
-  Large Edged:
+  Twohanded Edged:
   - Evasion
-  - Shield Usage
   - Parry
+  - Shield Usage

@@ -20,11 +20,10 @@ training_manager_priority_skills:
 - Chain Armor
 - Shield Usage
 hunting_info:
-- :zone: buccas
+- :zone: young_ogres
   stop_on:
   - Melee Mastery
   - Chain Armor
-  - Large Edged
   - Shield Usage
 
 use_harness_when_arcana_locked: true
@@ -100,12 +99,17 @@ gear:
   :is_leather: false
   :hinders_lockpicking: false
   :is_worn: false
-- :adjective: bastard
-  :name: sword
+- :adjective: warring
+  :name: axe
   :wield: true
   :is_leather: false
   :hinders_lockpicking: false
-  :swappable: true
+  :is_worn: false
+- :adjective: battle
+  :name: axe
+  :wield: true
+  :is_leather: false
+  :hinders_lockpicking: false
   :is_worn: false
 - :name: scimitar
   :is_leather: false
@@ -129,18 +133,18 @@ buff_spells: &buff
   Centering:
     abbrev: cen
     recast: 1
-    mana: 22
+    mana: 32
   Bless:
     abbrev: bless
-    mana: 23
+    mana: 37
     recast: 1
   Minor Physical Protection:
     abbrev: mpp
-    mana: 20
+    mana: 30
     recast: 1
   Major Physical Protection:
     abbrev: mapp
-    mana: 16
+    mana: 24
     recast: 1
 
 
@@ -167,8 +171,8 @@ weapon_training:
   Brawling: ''
   Heavy Thrown: heavy mallet
   Large Blunt: heavy mallet
-  Large Edged: bastard sword
-  Twohanded Edged: bastard sword
+  Large Edged: battle axe
+  Twohanded Edged: warring axe
   Small Edged: scimitar
 
 combat_trainer_action_count: 10
@@ -214,14 +218,15 @@ waggle_sets:
       abbrev: center
       mana: 10
       cambrinth:
+        - 10
+        - 10
         - 5
-        - 5
-        - 2
     Minor Physical Protection: &mpp
       skill: Warding
       abbrev: mpp
-      mana: 10
+      mana: 15
       cambrinth:
+        - 5
         - 5
         - 5
     Major Physical Protection: &mapp
@@ -229,15 +234,15 @@ waggle_sets:
       abbrev: mapp
       mana: 10
       cambrinth:
-        - 5
-        - 3
+        - 10
+        - 4
     Bless: &bless
       skill: Utility
       abbrev: bless
-      mana: 15
+      mana: 17
       cambrinth:
-        - 5
-        - 4
+        - 10
+        - 10
   cleric_magic:
     - *cen
     - *mpp
@@ -252,13 +257,13 @@ appraisal_training:
 
 crafting_training_spells:
   Warding:
-    mana: 20
+    mana: 30
     abbrev: mpp
   Augmentation:
-    mana: 23
+    mana: 35
     abbrev: center
   Utility:
-    mana: 23
+    mana: 37
     abbrev: bless
 training_spells:
   Warding: *mpp

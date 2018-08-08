@@ -27,6 +27,13 @@ crossing_training:
 - Engineering
 
 
+
+before_sym: &before_sym
+#  - message: release symbiosis
+#    matches:
+#      - But you
+#      - You pause
+
 gem_pouch_adjective: black
 tie_gem_pouches: false
 appraisal_training:
@@ -40,7 +47,7 @@ training_manager_priority_skills:
 - Large Edged
 - Heavy Thrown
 hunting_info:
-- :zone: young_ogres
+- :zone: river_sprites
   :duration: 60
   stop_on:
   - Melee Mastery
@@ -52,6 +59,7 @@ buff_spells:
     abbrev: Shadows
     recast: 1
     mana: 1
+    before: *before_sym
     cambrinth:
       - 10
       - 10
@@ -63,6 +71,7 @@ buff_spells:
     moon: true
     recast: 1
     mana: 15
+    before: *before_sym
     cambrinth:
       - 6
       - 6
@@ -70,6 +79,7 @@ buff_spells:
     abbrev: seer
     recast: 1
     mana: 15
+    before: *before_sym
     cambrinth:
       - 6
       - 7
@@ -77,6 +87,7 @@ buff_spells:
     abbrev: psy
     recast: 1
     mana: 7
+    before: *before_sym
     cambrinth:
       - 10
       - 10
@@ -85,6 +96,7 @@ buff_spells:
     abbrev: aus
     recast: 1
     mana: 5
+    before: *before_sym
     cambrinth:
       - 10
       - 10
@@ -93,6 +105,7 @@ buff_spells:
     abbrev: cv
     recast: 1
     mana: 1
+    before: *before_sym
     cambrinth:
       - 10
       - 10
@@ -168,8 +181,9 @@ gear:
   :is_leather: false
   :hinders_lockpicking: false
   :is_worn: true
-- :adjective: pine-handled
-  :name: sledgehammer
+- :adjective: throwing
+  :name: mallet
+  :lodging: false
   :is_leather: false
   :hinders_lockpicking: false
   :is_worn: false
@@ -178,13 +192,7 @@ gear:
   :is_leather: false
   :hinders_lockpicking: false
   :is_worn: false
-- :adjective: hurling
-  :name: axe
-  :is_leather: false
-  :hinders_lockpicking: false
-  :is_worn: false
-- :name: axe
-  :adjective: battle
+- :name: spatha
   :is_worn: false
   :is_leather: false
   :swappable: false
@@ -219,14 +227,16 @@ offensive_spells:
     name: Stun Foe
     abbrev: sf
     recast_every: 1
+    before: *before_sym
     cast_only_to_train: true
-    mana: 7
+    mana: 9
   - skill: Sorcery
     name: Stun Foe2
     abbrev: sf
     recast_every: 1
+    before: *before_sym
     cast_only_to_train: true
-    mana: 7
+    mana: 9
     harmless: true
   - skill: Targeted Magic
     name: Dinazen Olkar
@@ -250,9 +260,9 @@ divination_bones_storage:
   tied:
 
 weapon_training:
-  Large Edged: battle axe
-  Heavy Thrown: hurling axe
-  Large Blunt: mace
+  Large Edged: spatha
+  Heavy Thrown: throwing mallet
+  Large Blunt: throwing mallet
   Brawling: ''
 use_stealth_attacks: false
 #use_stealth_attacks: false
@@ -300,7 +310,8 @@ waggle_sets:
       name: Stun Foe
       abbrev: sf
       recast_every: 1
-      mana: 7
+      before: *before_sym
+      mana: 9
   standard:
     Clear Vision: &cv
       skill: Augmentation
@@ -368,6 +379,7 @@ waggle_sets:
     Shadowling :
       abbrev: shadowling
       mana: 15
+      before: *before_sym
       cambrinth:
         - 5
         - 5
@@ -383,6 +395,7 @@ waggle_sets:
       abbrev: aus
       recast_every: 1
       mana: 15
+      before: *before_sym
       cambrinth:
         - 5
         - 5
@@ -392,6 +405,7 @@ waggle_sets:
       abbrev: pg
       recast_every: 1
       mana: 20
+      before: *before_sym
       cambrinth:
         - 5
         - 5
@@ -401,6 +415,7 @@ waggle_sets:
       abbrev: cv
       recast_every: 1
       mana: 20
+      before: *before_sym
       cambrinth:
         - 10
         - 10
@@ -410,6 +425,7 @@ waggle_sets:
       abbrev: thoughtcast
       recast_every: 1
       mana: 15
+      before: *before_sym
       cambrinth:
         - 5
         - 5
@@ -418,34 +434,61 @@ waggle_sets:
       abbrev: seer
       recast_every: 1
       mana: 15
+      before: *before_sym
       cambrinth:
         - 5
         - 5
         - 5
   Symbiosis:
-    Focus Moonbeam: &sym_fm
-      abbrev: fm
-      mana: 1
+    PG: &sym_util
+      skill: Utility
+      abbrev: pg
+      mana: 12
       symbiosis: true
+    CV: &sym_aug
+      abbrev: shadows
+      skill: Augmentation
+      mana: 16
+      symbiosis: true
+    PSY: &sym_ward
+      skill: Warding
+      abbrev: psy
+      symbiosis: true
+      before:
+      - release psy
+      mana: 12
+    PG2: &sym_util_camb
+      skill: Utility
+      abbrev: pg
+      mana: 10
       cambrinth:
-        - 2
-      moon: true
-      alt: *tho
+      - 2
+      symbiosis: true
+    CV2: &sym_aug_camb
+      abbrev: shadows
+      skill: Augmentation
+      mana: 10
+      cambrinth:
+      - 6
+      symbiosis: true
+    PSY2: &sym_ward_camb
+      abbrev: psy
+      skill: Warding
+      before:
+      - release psy
+      symbiosis: true
+      mana: 10
+      cambrinth:
+      - 2
 
   astrology-magic:
-    - *col
-    - *aus
-    - abbrev: fm
-      mana: 1
-      symbiosis: true
-      cambrinth:
-        - 2
-      moon: true
-      alt: *tho
+    - *sym_ward_camb
+    - *sym_aug_camb
+    - *sym_util_camb
 
 
 astrology_use_full_pools: false
-astrology_pool_target: 4
+astrology_pool_target: 8
 
 runestones:
   - imnera runestone
@@ -455,18 +498,18 @@ runestones:
 training_spells_max_threshold: 2
 train_with_spells: true
 combat_spell_training:
-  Augmentation : *aus
-  Warding : *psy
-  Utility : *tho
+  Augmentation : *sym_aug_camb
+  Warding : *sym_ward_camb
+  Utility : *sym_util_camb
   Sorcery : *sf
 training_spells:
-  Augmentation : *aus
-  Warding : *psy
-  Utility : *tho
+  Augmentation : *sym_aug
+  Warding : *sym_ward
+  Utility : *sym_util
 crafting_training_spells:
-  Augmentation : *aus
-  Warding : *psy
-  Utility : *tho
+  Augmentation : *sym_aug
+  Warding : *sym_ward
+  Utility : *sym_util
 
 
 workorder_min_items: 2
@@ -502,7 +545,7 @@ shaping_tools:
 
 crafting_container: duffel bag
 storage_containers:
-  - book bag
+  - hunting pack
 
 combat_spell_training_max_threshold: 5
 lockpick_room_id: 8246
@@ -530,7 +573,7 @@ picking_box_source: haversack
 use_lockpick_ring: true
 skip_lockpick_ring_refill: true
 sell_loot_pouch: false
-full_pouch_container: book bag
+full_pouch_container: hunting pack
 
 workorder_diff:
   blacksmithing: challenging
@@ -584,6 +627,9 @@ workorder_recipes:
     #   sew(5, 'knitted gloves', 'gloves')
 
 
+
+textbook: true
+textbook_type: self-help book
 #hunting_buddies:
 #  - Cattii
 

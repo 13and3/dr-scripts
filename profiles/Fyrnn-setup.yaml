@@ -1,0 +1,367 @@
+---
+# https://elanthipedia.play.net/Cleric#Circle_Requirements
+# 3 Magics: Arcana, Augmentation, Attunement
+# 3 Weapons (only 1 is needed to circle): Brawling, Heavy Thrown, Large Blunt
+# 1 Armor: Chain Armor (does not include Shield Usage)
+# 4 Survivals: Athletics, Perception, Evasion, Outdoorsmanship
+# 4 Lores (only 3 are needed to circle): Appraisal, Tactics, Scholarship, Mechanical Lore
+
+# Eventually you will need to train 1 more Weapon to circle (for a total of 2)
+
+# Eventually you will need to train 2 more Magics to circle (for a total of 5)
+# However, you will probably end up training them all since they each have very useful spells
+# The other Magic skills are: Targeted Magic, Warding, Debilitation, Utility
+
+# Eventually you will need to train 1 more Lore to circle (for a total of 4)
+
+# Hunting settings
+hunting_info:
+- :zone: origami
+  :duration: 30
+  stop_on:
+  - Melee Mastery
+  - Plate Armor
+  - Shield Usage
+
+
+
+typeahead: 2
+# Gear settings
+gear:
+# - :adjective: example
+#   :name: gear
+#   :is_leather: true
+#   :hinders_lockpicking: false
+#   :is_worn: true
+- :adjective: plate
+  :name: cuirass
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: ring
+  :name: balaclava
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: padded
+  :name: sleeves
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: scale
+  :name: greaves
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+- :adjective: target
+  :name: shield
+  :is_leather: false
+  :hinders_lockpicking: true
+  :is_worn: true
+- :adjective: parry
+  :name: stick
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: true
+#- :name: knuckles
+#  :is_leather: false
+#  :hinders_lockpicking: true
+#  :is_worn: true
+#- :adjective: elbow
+#  :name: spikes
+#  :is_leather: false
+#  :hinders_lockpicking: false
+#  :is_worn: true
+#- :adjective: heavy
+#  :name: mallet
+#  :lodging: false
+#  :is_leather: false
+#  :hinders_lockpicking: false
+#  :is_worn: false
+#- :adjective: throwing
+#  :name: axe
+#  :is_leather: false
+#  :hinders_lockpicking: false
+#  :is_worn: false
+#- :adjective: warring
+#  :name: axe
+#  :wield: true
+#  :is_leather: false
+#  :hinders_lockpicking: false
+#  :is_worn: false
+#- :adjective: battle
+#  :name: axe
+#  :wield: true
+#  :is_leather: false
+#  :hinders_lockpicking: false
+#  :is_worn: false
+- :adjective: quilted
+  :name: hauberk
+  :is_leather: true
+  :is_worn: true
+  :hinders_lockpicking: true
+- :adjective: quilted
+  :name: gloves
+  :is_leather: true
+  :is_worn: true
+  :hinders_lockpicking: true
+- :adjective: light
+  :name: spear
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+  :wield: true
+- :adjective: bastard
+  :name: sword
+  :swappable: true
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+- :adjective: throwing
+  :name: spike
+  :swappable: true
+  :is_leather: false
+  :hinders_lockpicking: false
+  :is_worn: false
+- :adjective: battle
+  :name: stonebow
+  :is_leather: true
+  :hinders_lockpicking: false
+  :is_worn: false
+
+gear_sets:
+  standard:
+    - round sipar
+    - ring balaclava
+    - scale greaves
+    - plate cuirass
+    - padded sleeves
+
+# Combat settings
+
+hunting_buddies:
+  #- Regaj
+
+listen: true
+
+skinning:
+  skin: true
+  arrange_all: false
+  arrange_count: 0
+  tie_bundle: false
+
+
+
+waggle_sets:
+  Noumena: &nou
+    mana: 7
+    skill: Utility
+    abbrev: nou
+  Ease Burden: &ease
+    mana: 5
+    skill: Augmentation
+    abbrev: ease
+  Burden: &burden
+    mana: 2
+    name: Burden
+    skill: Debilitation
+    recast_every: 30
+    cast_only_to_train: true
+    abbrev: burden
+  Manifest Force: &maf
+    mana: 5
+    skill: Warding
+    recast_every: 30
+    abbrev: maf
+  Strange Arrow: &stra
+    mana: 1
+    name: Strange Arrow
+    skill: Targetted Magic
+    cast_only_to_train: false
+    recast_every: 30
+    abbref: stra
+
+
+offensive_spells:
+  - *burden
+  - *stra
+
+
+combat_spell_training:
+  Augmentation : *ease
+  Warding : *maf
+  Utility : *nou
+training_spells:
+  Augmentation : *ease
+  Warding : *maf
+  Utility : *nou
+crafting_training_spells:
+  Augmentation : *ease
+  Warding : *maf
+  Utility : *nou
+
+dance_threshold: 0
+dance_skill: Large Edged
+training_abilities:
+  Tactics: 30
+  Hunt: 80
+  Collect: 60
+  PercMana: 60
+weapon_training:
+  Heavy Thrown: light spear
+  Polearms: light spear
+  Large Edged: bastard sword
+  Twohanded Edged: bastard sword
+  Crossbow: battle stonebow
+
+combat_trainer_action_count: 10
+combat_trainer_target_increment: 8
+
+#priority_weapons:
+#  - Large Edged
+#  - Large Blunt
+#  - Heavy Thrown
+# Non-combat settings
+training_spells:
+  Augmentation:
+    abbrev: Centering
+safe_room: 5713
+#cambrinth: cambrinth armband
+#cambrinth_cap: 32
+favor_goal: 32
+favor_god: Kertigen
+
+waggle_sets:
+
+
+Parry: &parry
+  - Parry
+  - Shield Usage
+  - Evasion
+Shield Usage: &shield
+  - Shield Usage
+  - Evasion
+  - Parry
+Evasion: &evasion
+  - Evasion
+  - Shield Usage
+  - Parry
+
+stances:
+  Small Edged: *parry
+  Light Thrown: *evasion
+  Heavy Thrown: *shield
+  Small Blunt: *shield
+  Large Edged: *evasion
+  Twohanded Edged: *shield
+  Polearms: *parry
+  Crossbow: *evasion
+
+dance_actions:
+- bob
+
+
+sell_loot_pouch: false
+full_pouch_container: backpack
+gem_pouch_adjective: red
+tie_gem_pouches: false
+appraisal_training:
+  - pouches
+#
+#crafting_training_spells:
+#  Warding:
+#    mana: 30
+#    abbrev: mpp
+#  Augmentation:
+#    mana: 35
+#    abbrev: center
+#  Utility:
+#    mana: 37
+#    abbrev: bless
+#training_spells:
+#  Warding: *mpp
+#  Augmentation: *cen
+#  Utility: *bless
+#combat_spell_training:
+#  Warding: *mpp
+#  Augmentation: *cen
+#  Utility: *bless
+
+adjustable_tongs: true
+carving_workorder_material_type: bone
+crafting_container: duffel bag
+storage_containers:
+  - backpack
+
+forging_tools:
+  - ball-peen hammer
+  - clockwork tongs
+  - bellow
+knitting_tools:
+ - knitting needle
+
+carving_tools:
+- chisels
+- rifflers
+- rasp
+- serrated saw
+
+workorder_diff:
+  blacksmithing: hard
+  tailoring: hard
+  carving: hard
+workorder_min_items: 3
+workorder_max_items: 3
+
+workorder_recipes:
+  carving:
+    #1 basic bone collecting
+    - a bone toe ring
+    - a bone nose ring
+    - a bone band
+    #2
+    - a bone pin
+    #3
+    - a shallow bone cup
+    - a bone hairpin
+
+  blacksmithing:
+    #1 utility forging
+    - a shallow metal cup
+    - a slender metal rod
+    #2
+    - a tall metal mug
+    - a short metal mug
+    - a soft metal keyblank
+    #3
+    - a back scratcher
+    #4 basic outfitting design
+    - smooth knitting needles
+    #5
+    - plain sewing needles
+  tailoring:
+    #1 knitted fabric design
+    - knitted anklet
+    - knitted socks
+    - knitted armband
+    - knitted napkin
+    #2
+    - knitted mittens
+    - knitted headband
+    #3
+    - knitted slippers
+    - knitted scarf
+    - knitted hat
+    - knitted booties
+    #4
+    - knitted gloves
+
+
+
+train_workorders:
+  - blacksmithing
+  - tailoring
+  - carving
+
+empty_hunting_room_messages:
+- I'm here to learn what my Guildmaster asks of me, I don't want to take what's not mine.

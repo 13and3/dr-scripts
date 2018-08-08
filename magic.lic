@@ -15,6 +15,8 @@ class Magic
     exit unless DRStats.moon_mage?
 
     start_script('moonwatch')
+    #start_script('sanowret')
+    echo 'hello'
 
     settings = get_settings
     @settings = settings
@@ -62,6 +64,7 @@ class Magic
         power_timer: nil
     }
 
+    fput 'store default pack'
 
     @magic_state = {
         spells: settings.waggle_sets['astrology-magic'],
@@ -103,8 +106,11 @@ class Magic
     while true
       walk_to(@training_room)
 
+
       check_listening(lesson_state, settings)
       #check_teaching(lesson_state, settings)
+
+      lock_warding(magic_state)
 
 
       # if should_pop
@@ -117,6 +123,7 @@ class Magic
       fput "stow #{settings.hand_armor}"
       pause 1
       wait_for_script_to_complete('buff')
+
 
       if should_observe
         echo 'BEGINNING ASTROLOGY'
@@ -138,10 +145,10 @@ class Magic
         Flags.reset('astrology-ready-to-observe')
         echo 'ENDING ASTROLOGY'
       end
+      train_appraisal(timers)
 
-      until((magic_locked && DRSkill.getxp('Arcana') > 30)||
-          mana < 20 ||
-          should_observe)
+
+      until(magic_locked ||  mana < 20 || should_observe)
         echo 'cycle magic...'
         choose_next_spell(magic_state)
         prepare_next_spell(magic_state)
@@ -150,8 +157,6 @@ class Magic
           echo 'failed to cast...'
         end
       end
-      train_appraisal(timers)
-
 
       unless DRSkill.getxp(alt_cycle[alt_idx]) > 28 || (Flags['astrology-ready-to-observe'] && !astrology_locked)
         case alt_cycle[alt_idx]
@@ -216,6 +221,19 @@ class Magic
 
   def astrology_locked
     return DRSkill.getxp('Astrology') >= 24
+  end
+
+  def lock_warding(state)
+    timing_data = timing_start('Warding')
+    until(DRSkill.getxp('Warding') > 30)
+      psy = state[:settings].waggle_sets['Symbiosis']['PSY']
+      bput('prep symbiosis', 'You recall', 'But you\'ve' )
+      bput("prep #{psy['abbrev']} #{psy['mana']}", 'You raise', 'You are already')
+      do_filler(state)
+      waitcastrt_and_pause?
+      bput('cast', 'You gesture')
+    end
+    timing_end('Warding', timing_data)
   end
 
   def should_observe

@@ -309,8 +309,12 @@ module DRC
     end
   end
 
-  def hide?(hide_type = 'hide')
+  def hide?(hide_type = 'hide', retreat_before_hide = false)
     unless hiding?
+      if(retreat_before_hide)
+        fput('ret')
+        fput('ret')
+      end
       case bput(hide_type, 'Roundtime', 'too busy performing', 'can\'t see any place to hide yourself', 'Stalk what', 'You\'re already stalking', 'Stalking is an inherently stealthy')
       when 'too busy performing'
         bput('stop play', 'You stop playing', 'In the name of')

@@ -1747,6 +1747,9 @@ class TrainerProcess
     @hide_type = settings.hide_type
     echo("  @hide_type: #{@hide_type}") if $debug_mode_ct
 
+    @retreat_before_hide = settings.retreat_before_hide
+    echo @retreat_before_hide
+
     @force_unhide = settings.force_unhide
     echo("  @force_unhide: #{@force_unhide}") if $debug_mode_ct
 
@@ -1838,7 +1841,9 @@ class TrainerProcess
         fput('stand')
       end
     when 'Stealth'
-      if hide?(@hide_type) && !@dont_stalk && !game_state.npcs.empty? && @hide_type == 'hide'
+      echo 'retreat before hide'
+      echo @retreat_before_hide
+      if hide?(@hide_type, @retreat_before_hide) && !@dont_stalk && !game_state.npcs.empty? && @hide_type == 'hide'
         stalked = bput('stalk', 'Stalk what',
                        'Try being out of sight',
                        'You move into position',
@@ -2183,6 +2188,9 @@ class AttackProcess
 
     @hide_type = settings.hide_type
     echo("  @hide_type: #{@hide_type}") if $debug_mode_ct
+
+    @retreat_before_hide = settings.retreat_before_hide
+    echo @retreat_before_hide
 
     @offhand_thrown = settings.offhand_thrown
     echo("  @offhand_thrown: #{@offhand_thrown}") if $debug_mode_ct

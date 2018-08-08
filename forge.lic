@@ -58,6 +58,9 @@ class Forge
     @belt = @settings.forging_belt
     @hammer = @settings.forging_tools.find { |item| /hammer|mallet/ =~ item }
     @training_spells = @settings.crafting_training_spells
+    @tongs_are_tongs = nil
+    @fuel_command = 'push fuel with my shovel'
+    @fuel_command = 'push fuel with my tongs' if @settings['adjustable_tongs']
 
     @item = args.noun
     wait_for_script_to_complete('buff', ['forge'])
@@ -87,7 +90,33 @@ class Forge
   end
 
   def get_item(name)
-    get_crafting_item(name, @bag, @bag_items, @belt)
+    if['tongs', 'shovel'].include?(name) && @settings['adjustable_tongs']
+      get_crafting_item('tongs', @bag, @bag_items, @belt)
+
+      if(@tongs_are_tongs.nil?)
+        case bput('adjust tongs', 'You can\'t','pull free the head of a shovel','readying them for use as tongs once more')
+        when 'You can\'t'
+          echo 'NOT ADJUSTABLE SHOVEL/TONGS :\'('
+        when 'pull free the head of a shovel'
+          @tongs_are_tongs = false
+        when 'readying them for use as tongs once more'
+          @tongs_are_tongs = true
+        end
+      end
+
+      adjust = @tongs_are_tongs && name == 'shovel' ||
+          !@tongs_are_tongs && name == 'tong' ||
+          !@tongs_are_tongs && name == 'tongs'
+
+      if(adjust)
+        bput('adjust tongs', 'You lock', 'With a')
+        @tongs_are_tongs = !@tongs_are_tongs
+      else
+        return
+      end
+    else
+      get_crafting_item(name, @bag, @bag_items, @belt)
+    end
   end
 
   def stow_item(name)
@@ -217,7 +246,7 @@ class Forge
               'metal looks to be in need of some oil to preserve', 'to be cleaned')
     when 'needs more fuel', 'need some more fuel'
       get_item('shovel')
-      bput('push fuel with my shovel', 'Roundtime')
+      bput(@fuel_command, 'Roundtime')
       waitrt?
       stow_item('shovel')
     when 'As you finish working the fire dims and produces less heat', 'As you finish the fire flickers and is unable to consume its fuel'
@@ -316,7 +345,7 @@ class Forge
   def add_fuel
     stow_item('tongs')
     get_item('shovel')
-    case bput('push fuel with my shovel', 'Roundtime', 'That tool does not seem')
+    case bput(@fuel_command, 'Roundtime', 'That tool does not seem')
     when 'That tool does not seem'
       analyze_item
     else

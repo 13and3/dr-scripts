@@ -35,8 +35,10 @@ module MY_COMMON
   def train_forging(timers, discipline)
     unless DRSkill.getxp('Forging') > 10
       timing_data = timing_start('Forging')
+      timing_data2 = timing_start('Trading')
       wait_for_script_to_complete('workorders', [discipline])
       timing_end('Forging', timing_data)
+      timing_end('Trading', timing_data2)
       wait_for_script_to_complete('sell-loot')
       train_appraisal(timers)
     end
@@ -45,8 +47,10 @@ module MY_COMMON
   def train_outfitting(timers, discipline = 'tailoring')
     unless DRSkill.getxp('Outfitting') > 10
       timing_data = timing_start('Outfitting')
+      timing_data2 = timing_start('Trading')
       wait_for_script_to_complete('workorders', [discipline])
       timing_end('Outfitting', timing_data)
+      timing_end('Trading', timing_data2)
       wait_for_script_to_complete('sell-loot')
       train_appraisal(timers)
     end
@@ -55,8 +59,10 @@ module MY_COMMON
   def train_engineering(timers, disc = 'shaping')
     unless DRSkill.getxp('Engineering') > 10
       timing_data = timing_start('Engineering')
+      timing_data2 = timing_start('Trading')
       wait_for_script_to_complete('workorders', [disc])
       timing_end('Engineering', timing_data)
+      timing_end('Trading', timing_data2)
       wait_for_script_to_complete('sell-loot')
       train_appraisal(timers)
     end
@@ -116,8 +122,21 @@ module MY_COMMON
 
   def train_first_aid(magic_state, chart_data, as_filler = false)
     timing_data = timing_start('First Aid')
-    compendium_charts(magic_state,  chart_data, as_filler)
+    settings = magic_state[:settings]
+    if settings.textbook
+      booktype = settings.textbook_type
+      textbook_charts(magic_state, chart_data, booktype, as_filler)
+    else
+      booktype = 'compendium'
+      compendium_charts(magic_state, chart_data, as_filler)
+    end
     timing_end('First Aid', timing_data)
+  end
+
+  def textbook_charts(magic_state, chart_data, booktype, as_filler)
+    bput("get my #{booktype}", 'You get', 'You are already holding')
+    bput("open my #{booktype}", 'You open your', 'That is already open')
+    study_charts(chart_data, magic_state, booktype, as_filler)
   end
 
   def compendium_charts(magic_state, chart_data, as_filler)
@@ -126,27 +145,17 @@ module MY_COMMON
     pause
     compendium_charts = reget(40).grep(/^   .+$/).map(&:strip)
     charts_to_read = chart_data.select { |name, _info| compendium_charts.include?(name) }
-    study_charts(charts_to_read, magic_state, as_filler)
+    study_charts(charts_to_read, magic_state, 'compendium', as_filler)
     bput('stow my compendium', 'You put')
   end
 
-  # def filler_compendium(magic_state)
-  #   bput('get my compendium', 'You get', 'You are already holding')
-  #   case bput('study my compendium', 'Why', 'clarity', 'Roundtime')
-  #   when 'Why'
-  #     bput('turn my compendium')
-  #   end
-  #
-  #
-  # end
-  #
-  # def mark_chart_complete(chart_state)
-  #
-  #   bput('look my compendium', '^The compendium lies open to the section on (.*) physiology')
-  # end
-
-  def study_charts(charts_to_read, magic_state, as_filler)
-    booktype = 'compendium'
+  def study_charts(charts_to_read, magic_state, booktype, as_filler)
+    echo charts_to_read
+             .map { |_name, info| info }
+             .select { |info| info['scholarship'] <= DRSkill.getrank('Scholarship') }
+             .sort_by { |info| info['scholarship'] }
+             .reverse
+             .take(20)
     charts_to_read
         .map { |_name, info| info }
         .select { |info| info['scholarship'] <= DRSkill.getrank('Scholarship') }
@@ -244,11 +253,13 @@ module MY_COMMON
     data = deep_copy(current_spell)
     discern_data = DRCA.check_discern(deep_copy(current_spell), settings)
 
-
-    if( (DRSkill.getxp("Arcana") >= 32 || ignore_camb) && !discern_data['cambrinth'].nil?)
+    arcana_locked = DRSkill.getxp('Arcana') >= 32 || ignore_camb
+    if(arcana_locked && !data['cambrinth'].nil?)
+      data['mana'] = data['mana'] + data['cambrinth'].flatten.map(&:to_i).reduce(0, :+)
+    elsif( arcana_locked && !discern_data['cambrinth'].nil?)
       mana =  discern_data['mana'] + discern_data['cambrinth'].flatten.map(&:to_i).reduce(0, :+)
       data['mana'] = mana - (0.1 * mana).ceil
-    else
+    elsif(data['mana'].nil?)
       data = discern_data
     end
     data = update_astral_data(data)
@@ -258,9 +269,6 @@ module MY_COMMON
     if (data['abbrev'] =~ /locat/i) && !DRSpells.active_spells['Clear Vision']
       cast_spell({ 'abbrev' => 'cv', 'mana' => 1, 'prep_time' => 5 }, settings)
     end
-
-    echo 'checkprep'
-    echo checkprep
 
     release_cyclics if data['cyclic']
     DRC.bput('release spell', 'You let your concentration lapse', "You aren't preparing a spell") unless checkprep == 'None'
@@ -392,7 +400,7 @@ module MY_COMMON
         settings.cambrinth_items.each_with_index do |item, index|
           if current_prep_info['cambrinth'][index][0]
             find_charge_invoke_stow(item['name'], item['stored'], item['cap'],
-                                    settings.dedicated_camb_use, current_prep_info['cambrinth'][index],
+                                    settings.dedicated_camb_use, current_prep_info['cambrinth'],
                                     settings.cambrinth_invoke_exact_amount)
           end
         end
@@ -409,7 +417,6 @@ module MY_COMMON
     data = current_prep_info
     do_filler(state) until(checkcastrt < 1 || skip_filler)
     waitcastrt_and_pause?
-    pause 1
 
     cast?(data['cast'], data['symbiosis'], data['before'], data['after'])
   end
@@ -454,7 +461,7 @@ module MY_COMMON
       braid_to_fail(state, 'grass')
       return
     end
-    state[:skip_first_aid] || filler_first_aid({})
+    state[:skip_first_aid] || train_first_aid(state, state[:chart_data], true)
     echo 'no filler left, pausing'
     waitcastrt_and_pause?
 =begin

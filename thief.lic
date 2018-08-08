@@ -49,21 +49,21 @@ class Thief
 
 
     cycle = [
+        'Melee Mastery',
         'Outdoorsmanship',
-        'Scholarship',
         'Thievery',
         'Athletics',
+        'Melee Mastery',
         'Forging',
-        'Outfitting',
         'First Aid',
         'Melee Mastery',
         'Outdoorsmanship',
+        #'Outfitting',
         'Thievery',
         'Engineering',
+        'Melee Mastery',
         'Mechanical Lore',
         'First Aid',
-        'Melee Mastery',
-        'Thievery'
     ]
     idx = UserVars.cycle_index || -1
     while true
@@ -109,15 +109,19 @@ class Thief
       when 'Scholarship'
         train_scholarship unless DRSkill.getxp('Scholarship') > 15
         train_appraisal(timers)
+      when 'Lockpicking'
+        walk_to(settings.lockpick_room_id)
+        wait_for_script_to_complete('pick')
       when 'Melee Mastery'
+        store_crafting(settings)
         walk_to(settings.lockpick_room_id)
         wait_for_script_to_complete('pick')
         train_appraisal(timers)
         train_defending(settings)
-        wait_for_script_to_complete('hunting-buddy', ['back'])
+        #wait_for_script_to_complete('hunting-buddy', ['back'])
+        #wait_for_script_to_complete('hunting-buddy', ['back2'])
         walk_to(settings.lockpick_room_id)
-        wait_for_script_to_complete('pick')
-        wait_for_script_to_complete('crossing-repair')
+        #wait_for_script_to_complete('pick')
         train_appraisal(timers)
       when 'First Aid'
         walk_to(@training_room)
@@ -149,12 +153,12 @@ class Thief
 
 
   def train_defending(settings)
-    return unless DRSkill.getxp('Melee Mastery') < 10
-    @times_out_hunting = @times_out_hunting + 1 % 5
-    store_crafting(settings)
+    echo 'train defending'
+    return unless DRSkill.getxp('Plate Armor') < 20
+    'echo passed'
+    @times_out_hunting = @times_out_hunting + 1 % 2
     wait_for_script_to_complete('hunting-buddy')
     wait_for_script_to_complete('crossing-repair') if @times_out_hunting == 0
-    get_crafting(settings)
   end
 
 

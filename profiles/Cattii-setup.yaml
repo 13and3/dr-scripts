@@ -53,7 +53,7 @@ skip_lockpick_ring_refill: true
 stop_hunting_if_bleeding: false
 training_manager_town_duration: 30
 hunting_info:
-- :zone: young_ogres
+- :zone: dire_bears
   :duration: 60
   stop_on:
   - Defending
@@ -96,60 +96,18 @@ weapon_training:
   Brawling: ''
 
 buff_spells:
-  Gift of Life:
-    abbrev: GoL
-    recast: 1
-    mana: 7
-    cambrinth:
-      - 10
-      - 10
-      - 10
-  Refresh:
-    abbrev: refresh
-    recast: 1
-    mana: 4
-    cambrinth:
-      - 10
-      - 10
-      - 10
-      - 10
-      - 10
-#  Heal Wounds:
-#    abbrev: hw
-#    mana: 5
-#    cambrinth:
-#      - 10
-#      - 10
-#    recast_every: 120
-#    cast: cast chest int
-#  Heal Scars:
-#    abbrev: hs
-#    mana: 5
-#    cambrinth:
-#      - 10
-#      - 10
-#    recast_every: 120
-#    cast: cast chest int
-#  Cure Disease:
-#    abbrev: cd
-#    mana: 10
-#    recast_every: 120
-  Iron Constitution:
-    abbrev: IC
-    recast: 1
-    mana: 5
-    cambrinth:
-      - 10
-      - 10
-      - 10
-  Blood Staunching:
-    abbrev: bs
-    recast: 1
+  Guardian Spirit:
+    abbrev: gs
+    mana: 6
+    recast: 0
+    cyclic: true
+    cast: cast custom
+    command: warrior to behavior defensive
+    expire: appears suddenly less real
+  Heal:
+    abbrev: heal
     mana: 15
-    cambrinth:
-      - 10
-      - 10
-      - 10
+    recast_every: 360
   Aggressive Stance:
     abbrev: ags
     recast: 1
@@ -183,22 +141,15 @@ dance_actions:
 Priority Defense: Evasion
 
 offensive_spells:
-# - skill: Targeted Magic
-#   name: Guardian Spirit
-#   abbrev: gs
-#   cyclic: true
-#   mana: 8
-#   harmless: true
-#   command: WARRIOR TO BEHAVIOR AGGRESSIVE
 - skill: Targeted Magic
   name: Paralysis
   abbrev: paralysis
-  mana: 11
+  mana: 13
   harmless: true
 - skill: Debilitation
   name: Lethargy
   abbrev: lethargy
-  mana: 7
+  mana: 9
   harmless: true
 #  harmless: true
 training_abilities:
@@ -206,13 +157,25 @@ training_abilities:
   App Quick: 60
   Perc: 120
   Collect: 120
-manipulate_threshold: 5
+manipulate_threshold: 9
 listen: true
 safe_room: 5713 #empath guild
 vine_room: 851 #pine needle path
 
 #safe_room: 2039
 #vine_room: 2039
+
+
+
+textbook: true
+textbook_type: grey textbook
+
+before_sym: &before_sym
+  - message: release symbiosis
+    matches:
+      - But you
+      - You pause
+
 
 engineering_room: 5713
 outfitting_room: 5713
@@ -282,22 +245,16 @@ waggle_sets:
   training: &training
     Warding: &ward_sym
       abbrev: ic
-      mana: 38
-      before:
-        - release symbiosis
-      symbiosis: false
+      mana: 5
+      symbiosis: true
     Augmentation: &aug_sym
       abbrev: refresh
-      mana: 1
+      mana: 5
       symbiosis: true
-      before:
-        - release refresh
     Utility: &util_sym
-      abbrev: heal
-      mana: 35
-      symbiosis: false
-      before:
-        - release symbiosis
+      abbrev: bs
+      mana: 5
+      symbiosis: true
   empathy:
     - *ward_sym
     - *aug_sym
@@ -315,21 +272,9 @@ training_spells:
  Utility: *util_sym
  #Utility: *cd
 combat_spell_training:
- Warding:
-    abbrev: ic
-    mana: 15
-    cambrinth:
-      - 10
-      - 5
-      - 5
+ Warding: *ward_sym
  Augmentation: *aug_sym
- Utility:
-    abbrev: heal
-    mana: 15
-    cambrinth:
-      - 10
-      - 5
-      - 5
+ Utility: *util_sym
  #Utility: *cd
 
 ignored_npcs:
@@ -357,11 +302,12 @@ favor_goal: 35
 # Crafting
 
 storage_containers:
-  - backpack
+  - pack
   - duffel bag
+  - haversack
 ingot_container: duffel bag
-crafting_container: haversack
-crafting_items_in_container: haversack
+crafting_container: duffel bag
+crafting_items_in_container: duffel bag
 forging_belt: 
   name: forger belt
   items:
@@ -380,7 +326,7 @@ workorder_diff:
   weaponsmithing: hard
   shaping: challenging
   alchemy: hard
-  tailoring: hard
+  tailoring: challenging
 train_workorders:
   - Tailoring
   - Shaping
@@ -392,11 +338,11 @@ work_order_disciplines:
   - Shaping #Engineering
   #- Remedies #Alchemy
 
+adjustable_tongs: true
 forging_tools:
   - ball-peen hammer
-  - tong
+  - clockwork tongs
   - bellow
-  - shovel
 knitting_tools:
  #- knitting needle
   - sewing needle
@@ -424,7 +370,7 @@ carving_tools:
 
 appraisal_training:
   - pouches
-full_pouch_container: backpack
+full_pouch_container: pack
 
 sell_loot_pouch: false
 sell_loot_bundle: false
